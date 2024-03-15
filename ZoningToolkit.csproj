@@ -22,8 +22,16 @@
 	<!--Imports must be after PropertyGroup block-->
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.props" />
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" />
+	<ItemGroup>
+	  <Compile Remove="zoning-toolkit-ui\asdfas\**" />
+	  <EmbeddedResource Remove="zoning-toolkit-ui\asdfas\**" />
+	  <None Remove="zoning-toolkit-ui\asdfas\**" />
+	</ItemGroup>
 
 	<ItemGroup>
+		<Reference Include="Colossal.Mathematics">
+		  <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities Skylines II\Cities2_Data\Managed\Colossal.Mathematics.dll</HintPath>
+		</Reference>
 		<Reference Include="Game">
 			<Private>false</Private>
 		</Reference>
