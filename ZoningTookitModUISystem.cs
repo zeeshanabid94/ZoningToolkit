@@ -7,17 +7,25 @@ using Game.Tools;
 using Game.UI;
 using Unity.Collections;
 using Unity.Entities;
+using ZoningToolkit.Components;
 using ZoningToolkit.Utilties;
 
 namespace ZoningToolkit.Systems
 {
+    internal struct UIState
+    {
+        public bool visible;
+        public ZoningMode zoningMode;
+        public bool applyToNewRoads;
+        public bool toolEnabled;
+    }
     partial class ZoningToolkitModUISystem : UISystemBase
     {
         private string kGroup = "zoning_adjuster_ui_namespace";
         private ZoningToolkitModSystem zoningToolkitModSystem;
         private bool activateModUI = false;
         private bool deactivateModUI = false;
-        private bool modUIVisible = false;
+        private UIState uiState;
         private ToolSystem toolSystem;
         private NativeQueue<Entity> entitiesToUpdate;
         private ZoningToolkitModToolSystem zoningToolkitModToolSystem;
@@ -31,22 +39,28 @@ namespace ZoningToolkit.Systems
             this.zoningToolkitModSystem = World.GetExistingSystemManaged<ZoningToolkitModSystem>();
             this.toolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
             this.zoningToolkitModToolSystem = World.GetOrCreateSystemManaged<ZoningToolkitModToolSystem>();
+            this.uiState = new UIState()
+            {
+                visible = false,
+                zoningMode = ZoningMode.Default,
+                applyToNewRoads = false,
+            };
 
             this.toolSystem.EventPrefabChanged = (Action<PrefabBase>)Delegate.Combine(toolSystem.EventPrefabChanged, new Action<PrefabBase>(OnPrefabChanged));
             this.toolSystem.EventToolChanged = (Action<ToolBaseSystem>)Delegate.Combine(toolSystem.EventToolChanged, new Action<ToolBaseSystem>(OnToolChange));
 
-            this.AddUpdateBinding(new GetterValueBinding<string>(this.kGroup, "zoning_mode", () => zoningToolkitModSystem.zoningMode.ToString()));
-            this.AddUpdateBinding(new GetterValueBinding<bool>(this.kGroup, "upgrade_enabled", () => zoningToolkitModSystem.upgradeEnabled));
-            this.AddUpdateBinding(new GetterValueBinding<bool>(this.kGroup, "visible", () => modUIVisible));
+            this.AddUpdateBinding(new GetterValueBinding<string>(this.kGroup, "zoning_mode", () => this.uiState.zoningMode.ToString()));
+            this.AddUpdateBinding(new GetterValueBinding<bool>(this.kGroup, "tool_enabled", () => this.uiState.toolEnabled));
+            this.AddUpdateBinding(new GetterValueBinding<bool>(this.kGroup, "visible", () => this.uiState.visible));
 
             this.AddBinding(new TriggerBinding<string>(this.kGroup, "zoning_mode_update", zoningMode => {
                     this.getLogger().Info($"Zoning mode updated to ${zoningMode}.");
-                    this.zoningToolkitModSystem.setZoningMode(zoningMode);
+                    this.uiState.zoningMode = (ZoningMode) Enum.Parse(typeof(ZoningMode), zoningMode);
                 })
             );
-            this.AddBinding(new TriggerBinding<bool>(this.kGroup, "upgrade_enabled", upgrade_enabled => {
-                    this.getLogger().Info($"Upgrade Enabled updated to ${upgrade_enabled}.");
-                    this.selectUpdateZoning();
+            this.AddBinding(new TriggerBinding<bool>(this.kGroup, "tool_enabled", tool_enabled => {
+                    this.getLogger().Info($"Tool Enabled updated to ${tool_enabled}.");
+                    this.uiState.toolEnabled = tool_enabled;
                 })
             );
 
@@ -59,14 +73,14 @@ namespace ZoningToolkit.Systems
             this.entitiesToUpdate.Dispose();
         }
 
-        private void selectUpdateZoning()
+        private void toggleTool(bool enableTool)
         {
-            if (this.zoningToolkitModToolSystem.toolEnabled)
-            {
-                this.zoningToolkitModToolSystem.DisableTool();
-            } else
+            if (enableTool)
             {
                 this.zoningToolkitModToolSystem.EnableTool();
+            } else
+            {
+                this.zoningToolkitModToolSystem.DisableTool();
             }
         }
 
@@ -74,7 +88,7 @@ namespace ZoningToolkit.Systems
         {
             this.getLogger().Info("Tool changed!");
 
-            if (tool is NetToolSystem)
+            if (tool is NetToolSystem || tool is ZoningToolkitModToolSystem)
             {
                 if (tool.GetPrefab() is RoadPrefab)
                 {
@@ -143,9 +157,9 @@ namespace ZoningToolkit.Systems
                 // unset the trigger
                 activateModUI = false;
 
-                if (!modUIVisible)
+                if (!this.uiState.visible)
                 {
-                   modUIVisible = true;
+                   uiState.visible = true;
                 }
             }
 
@@ -156,10 +170,28 @@ namespace ZoningToolkit.Systems
                 // Unset trigger
                 deactivateModUI = false;
 
-                if (modUIVisible)
+                if (this.uiState.visible)
                 {
-                    modUIVisible= false;
+                    this.uiState.visible = false;
                 }
+            }
+
+            // Update Tool and System info from UI
+            if (this.uiState.zoningMode != this.zoningToolkitModToolSystem.workingState.zoningMode) {
+                this.getLogger().Info("Updating Tool System Zoning mode");
+                this.zoningToolkitModToolSystem.workingState.zoningMode = this.uiState.zoningMode;
+            }
+
+            if (this.uiState.zoningMode != this.zoningToolkitModSystem.zoningMode)
+            {
+                this.getLogger().Info("Updating Mod System Zoning mode");
+                this.zoningToolkitModSystem.zoningMode = this.uiState.zoningMode;
+            }
+
+            if (this.uiState.toolEnabled != this.zoningToolkitModToolSystem.toolEnabled)
+            {
+                this.getLogger().Info("Enabling/Disabling tool");
+                toggleTool(this.uiState.toolEnabled);
             }
         }
     }

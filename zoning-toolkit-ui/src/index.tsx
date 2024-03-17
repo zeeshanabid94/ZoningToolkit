@@ -4,6 +4,10 @@ import { ZoningToolkitPanel, ZoningMode } from "mods/zoning-toolkit-panel";
 
 const register: ModRegistrar = (moduleRegistry) => {
     console.log("Registering modules.");
+
+    moduleRegistry.find(".*").forEach((each) => {
+        console.log(`Module: ${each}`);
+    })
     // While launching game in UI development mode (include --uiDeveloperMode in the launch options)
     // - Access the dev tools by opening localhost:9444 in chrome browser.
     // - You should see a hello world output to the console.

@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Colossal.Logging;
 
 namespace ZoningToolkit.Utilties
 {
     public static class LogUtils
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ILog getLogger<T>(this T typeClass)
         {
             if (typeClass.GetType().IsClass || typeClass.GetType().IsValueType)

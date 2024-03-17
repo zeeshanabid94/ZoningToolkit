@@ -1,13 +1,13 @@
 ﻿import engine, { EventHandle } from 'cohtml/cohtml';
 import React from 'react';
 import Draggable from 'react-draggable';
-
+import * as GameUI from 'cs2/ui';
 export interface ZoningToolkitPanelProps {
     zoningMode: ZoningMode,
     isFocused: Boolean,
     isVisible: Boolean,
     isEnabled: Boolean,
-    isUpgradeEnabled: Boolean
+    isToolEnabled: Boolean
 }
 
 export enum ZoningMode {
@@ -38,7 +38,7 @@ function sendDataToCSharp<T>(namespace: string, event: String, newValue: T) {
 export class ZoningToolkitPanel extends React.Component<{}, ZoningToolkitPanelProps> {
     state: ZoningToolkitPanelProps;
     subscriptionZoningMode?: () => void;
-    subscriptionUpgradeEnabled?: () => void;
+    subscriptionToolEnabled?: () => void;
     subscriptionVisible?: () => void;
 
     constructor(props: ZoningToolkitPanelProps) {
@@ -46,7 +46,7 @@ export class ZoningToolkitPanel extends React.Component<{}, ZoningToolkitPanelPr
         this.state = {
             isEnabled: false,
             isFocused: false,
-            isUpgradeEnabled: false,
+            isToolEnabled: false,
             isVisible: false,
             zoningMode: ZoningMode.DEFAULT
         };
@@ -55,11 +55,32 @@ export class ZoningToolkitPanel extends React.Component<{}, ZoningToolkitPanelPr
     componentDidMount() {
         this.subscriptionZoningMode = updateEventFromCSharp<string>('zoning_adjuster_ui_namespace', 'zoning_mode', (zoningMode) => {
             console.log(`Zoning mode fetched ${zoningMode}`);
-            this.setState({ zoningMode: ZoningMode[zoningMode as keyof typeof ZoningMode] })
+            // TODO: Figure out a way to map string to enum more easily
+            let zoningModeValue: ZoningMode
+            switch (zoningMode) {
+                case "Left":
+                    zoningModeValue = ZoningMode.LEFT
+                    break
+                case "Right":
+                    zoningModeValue = ZoningMode.RIGHT
+                    break
+                case "None":
+                    zoningModeValue = ZoningMode.NONE
+                    break
+                case "Default":
+                    zoningModeValue = ZoningMode.DEFAULT
+                    break
+                default:
+                    zoningModeValue = ZoningMode.DEFAULT
+                    break
+            }
+
+            console.log(`Setting zoning mode ${zoningModeValue}`);
+            this.setState({ zoningMode: zoningModeValue })
         })
-        this.subscriptionUpgradeEnabled = updateEventFromCSharp<boolean>('zoning_adjuster_ui_namespace', 'upgrade_enabled', (upgradeEnabled) => {
-            console.log(`Upgrade Enabled Toggled ${upgradeEnabled}`);
-            this.setState({ isUpgradeEnabled: upgradeEnabled })
+        this.subscriptionToolEnabled = updateEventFromCSharp<boolean>('zoning_adjuster_ui_namespace', 'tool_enabled', (toolEnabled) => {
+            console.log(`Tool Enabled Toggled ${toolEnabled}`);
+            this.setState({ isToolEnabled: toolEnabled })
         })
         this.subscriptionVisible = updateEventFromCSharp<boolean>('zoning_adjuster_ui_namespace', 'visible', (visible) => {
             console.log(`UI visibility changed to ${visible}`);
@@ -70,7 +91,7 @@ export class ZoningToolkitPanel extends React.Component<{}, ZoningToolkitPanelPr
 
     componentWillUnmount() {
         this.subscriptionZoningMode?.();
-        this.subscriptionUpgradeEnabled?.();
+        this.subscriptionToolEnabled?.();
         this.subscriptionVisible?.();
     }
 
@@ -79,9 +100,9 @@ export class ZoningToolkitPanel extends React.Component<{}, ZoningToolkitPanelPr
         sendDataToCSharp('zoning_adjuster_ui_namespace', 'zoning_mode_update', zoningMode.toString());
     }
 
-    selectUpdateZoning = () => {
-        console.log(`Button clicked. Update zoning toggled. New value sending ${!this.state.isUpgradeEnabled}`);
-        sendDataToCSharp('zoning_adjuster_ui_namespace', 'upgrade_enabled', !this.state.isUpgradeEnabled);
+    selectToolEnabled = () => {
+        console.log(`Button clicked. Tool Enabled toggled. New value sending ${!this.state.isToolEnabled}`);
+        sendDataToCSharp('zoning_adjuster_ui_namespace', 'tool_enabled', !this.state.isToolEnabled);
     }
 
     renderZoningModeButton(zoningMode: ZoningMode, style: Object): JSX.Element {
@@ -146,7 +167,7 @@ export class ZoningToolkitPanel extends React.Component<{}, ZoningToolkitPanelPr
 
         const updateZoningButtonStyle = {
             ...buttonStyle,
-            background: this.state.isUpgradeEnabled === true ? 'green' : 'gray',
+            background: this.state.isToolEnabled === true ? 'green' : 'gray',
         }
 
         const enabledButtonStyle = {
@@ -166,21 +187,32 @@ export class ZoningToolkitPanel extends React.Component<{}, ZoningToolkitPanelPr
             flexDirection: 'row'
         }
 
+        const zoningOptionsStyle = {
+            border: "solid"
+        }
+
         const { isVisible } = this.state;
 
         // Apply the styles to the elements
         return (
+                            
             <Draggable grid={[50, 50]}>
                 <div
                     style={windowStyle}
                     id="inner-div"
                 >
+                    <div id="zoning-mode-options">
+                        Zoning Mode Options
+                        <div id="button-list" style={zoningOptionsStyle}>
+                            {this.renderZoningModeButton(ZoningMode.LEFT, leftButtonStyle)}
+                            {this.renderZoningModeButton(ZoningMode.RIGHT, rightButtonStyle)}
+                            {this.renderZoningModeButton(ZoningMode.DEFAULT, defaultButtonStyle)}
+                            {this.renderZoningModeButton(ZoningMode.NONE, noneButtonStyle)}
+                        </div>
+                    </div>
                     <div id="button-list">
-                    {this.renderZoningModeButton(ZoningMode.LEFT, leftButtonStyle)}
-                    {this.renderZoningModeButton(ZoningMode.RIGHT, rightButtonStyle)}
-                    {this.renderZoningModeButton(ZoningMode.DEFAULT, defaultButtonStyle)}
-                    {this.renderZoningModeButton(ZoningMode.NONE, noneButtonStyle)}
-                    {this.renderButton("Update Zoning", updateZoningButtonStyle, this.selectUpdateZoning)}
+                    
+                    {this.renderButton("Zoning Tool", updateZoningButtonStyle, this.selectToolEnabled)}
                     </div>
                 </div>
             </Draggable>

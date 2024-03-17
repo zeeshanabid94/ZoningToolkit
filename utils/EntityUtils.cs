@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Colossal.IO.AssetDatabase.Internal;
 using Game.Common;
 using Game.Net;
@@ -11,6 +12,7 @@ namespace ZoningToolkit.Utilties
 {
     public static class EntityUtils
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void listEntityComponents(this ZoningToolkitModSystem gameSystemBase, Entity entity)
         {
             gameSystemBase.EntityManager.GetComponentTypes(entity).ForEach(compoenentType => {
@@ -18,6 +20,7 @@ namespace ZoningToolkit.Utilties
             });
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void listEntityComponents(this UISystemBase uiSystemBase, Entity entity)
         {
             uiSystemBase.EntityManager.GetComponentTypes(entity).ForEach(compoenentType => {
@@ -25,20 +28,21 @@ namespace ZoningToolkit.Utilties
             });
         }
 
-/*        public static void listCurveComponentData(this ZoningToolkitModSystem system, Entity entity)
-        {
-            if (system.ownerComponentLookup.HasComponent(entity))
-            {
-                Owner owner = system.ownerComponentLookup[entity];
-                if (system.curveComponentLookup.HasComponent(owner.m_Owner))
+        /*        public static void listCurveComponentData(this ZoningToolkitModSystem system, Entity entity)
                 {
-                    Curve curve = system.curveComponentLookup[owner.m_Owner];
-                    Console.WriteLine("****** Printing curve data *****");
-                    Console.WriteLine($"Curve a: ${curve.m_Bezier.a}, b: ${curve.m_Bezier.b}, c: ${curve.m_Bezier.c}, d: ${curve.m_Bezier.d}, length: ${curve.m_Length}");
-                }
-            }
-        }*/
+                    if (system.ownerComponentLookup.HasComponent(entity))
+                    {
+                        Owner owner = system.ownerComponentLookup[entity];
+                        if (system.curveComponentLookup.HasComponent(owner.m_Owner))
+                        {
+                            Curve curve = system.curveComponentLookup[owner.m_Owner];
+                            Console.WriteLine("****** Printing curve data *****");
+                            Console.WriteLine($"Curve a: ${curve.m_Bezier.a}, b: ${curve.m_Bezier.b}, c: ${curve.m_Bezier.c}, d: ${curve.m_Bezier.d}, length: ${curve.m_Length}");
+                        }
+                    }
+                }*/
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void listEntityComponentsInQuery(this ZoningToolkitModSystem system, EntityQuery entityQuery)
         {
             NativeArray<Entity> entities = entityQuery.ToEntityArray(Allocator.Temp);

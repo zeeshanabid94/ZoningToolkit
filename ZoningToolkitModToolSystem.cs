@@ -1,4 +1,5 @@
 ﻿using Game;
+using Game.Areas;
 using Game.Buildings;
 using Game.Common;
 using Game.Input;
@@ -9,9 +10,11 @@ using Game.Prefabs;
 using Game.Routes;
 using Game.Tools;
 using Game.Vehicles;
+using Game.Zones;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -43,6 +46,45 @@ namespace ZoningToolkit
         }
     }
 
+    public partial struct UpdateZoningInfo : IJob
+    {
+        public NativeHashSet<Entity> entityHashSet;
+        public ComponentLookup<Curve> curveComponentLookup;
+        public ComponentLookup<ZoningInfo> zoningInfoComponentLookup;
+        public BufferLookup<SubBlock> subBlockBufferLookup;
+        public EntityCommandBuffer entityCommandBuffer;
+        public ZoningInfo newZoningInfo;
+        public void Execute()
+        {
+            NativeArray<Entity> entities = entityHashSet.ToNativeArray(Allocator.TempJob);
+            foreach (Entity entity in entities)
+            {
+                if (curveComponentLookup.HasComponent(entity))
+                {
+                    this.getLogger().Info("Entity has curve component. Updating Zoning Info.");
+
+                    this.entityCommandBuffer.AddComponent<ZoningInfo>(entity, newZoningInfo);
+
+                    if (subBlockBufferLookup.HasBuffer(entity))
+                    {
+                        DynamicBuffer<SubBlock> subBlockBuffer = subBlockBufferLookup[entity];
+
+                        foreach (var item in subBlockBuffer)
+                        {
+                            this.entityCommandBuffer.AddComponent<ZoningInfoUpdated>(item.m_SubBlock);
+                        }
+                    }
+                }
+
+                this.entityCommandBuffer.RemoveComponent<Highlighted>(entity);
+                this.entityCommandBuffer.AddComponent<Updated>(entity);
+            }
+
+            entities.Dispose();
+            entityHashSet.Clear();
+        }
+    }
+
     partial class ZoningToolkitModToolSystem : ToolBaseSystem
     {
         // This holds certain state that we use in our class
@@ -53,10 +95,13 @@ namespace ZoningToolkit
             public EntityCommandBuffer commandBufferSystem;
         }
 
-        private struct WorkingState
+        // This holds certain state that the Tool keeps
+        // throughout its lifetime.
+        internal struct WorkingState
         {
-            public Entity lastRaycastEntity;
-            public NativeQueue<Entity> lastRaycastEntities;
+            internal Entity lastRaycastEntity;
+            internal NativeHashSet<Entity> lastRaycastEntities;
+            internal ZoningMode zoningMode;
         }
 
         // Fields related to the Tool System itself.
@@ -66,14 +111,21 @@ namespace ZoningToolkit
         private NetToolSystem netToolSystem;
         private ToolSystem toolSystem;
         private ToolBaseSystem previousToolSystem;
-        public bool toolEnabled {  get; private set; }
-
         private ZoningToolkitModToolSystemStateMachine toolStateMachine;
+        private TypeHandle typeHandle;
         private OnUpdateMemory onUpdateMemory;
-        private WorkingState workingState;
+
+        internal bool toolEnabled { get; private set; }
+        internal WorkingState workingState;
 
         public override string toolID => "Zoning Toolkit Tool";
 
+        protected override void OnCreateForCompiler()
+        {
+            base.OnCreateForCompiler();
+
+            this.typeHandle.__AssignHandles(ref this.CheckedStateRef);
+        }
         protected override void OnCreate()
         {
             this.getLogger().Info($"Creating {toolID}.");
@@ -103,61 +155,80 @@ namespace ZoningToolkit
 
         private JobHandle stopDragging(ZoningToolkitModToolSystemState previousState, ZoningToolkitModToolSystemState nextState)
         {
-            this.entityUnhighlighted(previousState, nextState);
-
+            JobHandle updateZoningInfoJob = new UpdateZoningInfo()
+            {
+                curveComponentLookup = this.typeHandle.__Game_Net_Curve_RO_ComponentLookup,
+                zoningInfoComponentLookup = this.typeHandle.__Game_Zoning_Info_RW_ComponentLookup,
+                entityCommandBuffer = this.onUpdateMemory.commandBufferSystem,
+                entityHashSet = this.workingState.lastRaycastEntities,
+                subBlockBufferLookup = this.typeHandle.__Game_SubBlock_RW_BufferLookup,
+                newZoningInfo = new ZoningInfo()
+                {
+                    zoningMode = this.workingState.zoningMode
+                }
+            }.Schedule(this.onUpdateMemory.currentInputDeps);
+            this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(this.onUpdateMemory.currentInputDeps, updateZoningInfoJob);
             return this.onUpdateMemory.currentInputDeps;
         }
         private JobHandle hoverUpdate(ZoningToolkitModToolSystemState previousState, ZoningToolkitModToolSystemState nextState)
         {
-            this.entityUnhighlighted(previousState, nextState);
             this.entityHighlighted(previousState, nextState);
             return this.onUpdateMemory.currentInputDeps;
         }
 
         private JobHandle startDragSelecting(ZoningToolkitModToolSystemState previousState, ZoningToolkitModToolSystemState nextState)
         {
-            this.entityHighlighted(previousState, nextState);
+            this.selectEntity(previousState, nextState);
             return this.onUpdateMemory.currentInputDeps;
         }
 
         private JobHandle keepDragging(ZoningToolkitModToolSystemState previousState, ZoningToolkitModToolSystemState nextState)
         {
-            this.entityHighlighted(previousState, nextState);
+            this.selectEntity(previousState, nextState);
             return this.onUpdateMemory.currentInputDeps;
         }
 
-        private JobHandle entityUnhighlighted(ZoningToolkitModToolSystemState previousState, ZoningToolkitModToolSystemState nextState)
+        private JobHandle selectEntity(ZoningToolkitModToolSystemState previousState, ZoningToolkitModToolSystemState nextState)
         {
-            while (this.workingState.lastRaycastEntities.TryDequeue(out Entity entity))
+            this.getLogger().Info("Trying to Select Entity.");
+            if (this.GetRaycastResult(out Entity entity, out RaycastHit raycastHit))
             {
-                this.getLogger().Info("Dequeued entity from queue.");
-                if (this.workingState.lastRaycastEntity != entity)
+                if (!this.workingState.lastRaycastEntities.Contains(entity))
                 {
-                    this.getLogger().Info("Removing highlight from entity.");
-                    JobHandle unhighlightJob = new UnHighlightEntitiesJob()
+                    this.workingState.lastRaycastEntities.Add(entity);
+                    JobHandle highlightJob = new HighlightEntitiesJob()
                     {
-                        entityToUnhighlight = entity,
+                        entityToHighlight = entity,
                         commandBuffer = this.onUpdateMemory.commandBufferSystem
                     }.Schedule(onUpdateMemory.currentInputDeps);
-                    this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(unhighlightJob, this.onUpdateMemory.currentInputDeps);
+                    this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(highlightJob, this.onUpdateMemory.currentInputDeps);
                 }
             }
-
-            this.workingState.lastRaycastEntities.Enqueue(this.workingState.lastRaycastEntity);
 
             return this.onUpdateMemory.currentInputDeps;
         }
         private JobHandle entityHighlighted(ZoningToolkitModToolSystemState previousState, ZoningToolkitModToolSystemState nextState)
         {
-            this.getLogger().Info("Highlighting Entity.");
+            this.getLogger().Info("Trying to Highlight Entity.");
+            Entity previousRaycastEntity = this.workingState.lastRaycastEntity;
             if (this.GetRaycastResult(out Entity entity, out RaycastHit raycastHit))
             {
                 this.getLogger().Info($"Raycast hit entity {entity} at {raycastHit}");
                 if (this.workingState.lastRaycastEntity != entity)
                 {
                     this.getLogger().Info("Highlighting entity.");
+
+                    if (previousRaycastEntity != Entity.Null)
+                    {
+                        JobHandle unhighlightJob = new UnHighlightEntitiesJob()
+                        {
+                            commandBuffer = this.onUpdateMemory.commandBufferSystem,
+                            entityToUnhighlight = previousRaycastEntity,
+                        }.Schedule(onUpdateMemory.currentInputDeps);
+                        this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(unhighlightJob, this.onUpdateMemory.currentInputDeps);
+                    }
+
                     this.workingState.lastRaycastEntity = entity;
-                    this.workingState.lastRaycastEntities.Enqueue(entity);
                     JobHandle highlightJob = new HighlightEntitiesJob()
                     {
                         entityToHighlight = entity,
@@ -168,6 +239,17 @@ namespace ZoningToolkit
             } else
             {
                 this.getLogger().Info("No entity hit.");
+                this.workingState.lastRaycastEntity = Entity.Null;
+
+                if (previousRaycastEntity != Entity.Null)
+                {
+                    JobHandle unhighlightJob = new UnHighlightEntitiesJob()
+                    {
+                        commandBuffer = this.onUpdateMemory.commandBufferSystem,
+                        entityToUnhighlight = previousRaycastEntity,
+                    }.Schedule(onUpdateMemory.currentInputDeps);
+                    this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(unhighlightJob, this.onUpdateMemory.currentInputDeps);
+                }
             }
 
             return this.onUpdateMemory.currentInputDeps;
@@ -182,11 +264,8 @@ namespace ZoningToolkit
             this.applyAction.ClearDisplayProperties();
             this.cancelAction.ClearDisplayProperties();
             this.onUpdateMemory = default;
-            this.workingState = new WorkingState()
-            {
-                lastRaycastEntity = Entity.Null,
-                lastRaycastEntities = new NativeQueue<Entity>(Allocator.Persistent)
-            };
+            this.workingState.lastRaycastEntity = Entity.Null;
+            this.workingState.lastRaycastEntities = new NativeHashSet<Entity>(32, Allocator.Persistent);
             this.toolStateMachine.reset();
         }
 
@@ -210,6 +289,16 @@ namespace ZoningToolkit
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            if (this.m_FocusChanged)
+                return inputDeps;
+
+            base.requireZones = true;
+            base.requireAreas |= AreaTypeMask.Lots;
+            if (this.GetPrefab() != null)
+            {
+                this.UpdateInfoview(this.m_ToolSystem.actionMode.IsEditor() ? Entity.Null : this.m_PrefabSystem.GetEntity(this.GetPrefab()));
+            }
+            this.typeHandle.__UpdateComponents(ref this.CheckedStateRef);
             this.onUpdateMemory = new OnUpdateMemory()
             {
                 currentInputDeps = inputDeps,
@@ -261,128 +350,28 @@ namespace ZoningToolkit
 
         private struct TypeHandle
         {
-            [ReadOnly]
-            public ComponentTypeHandle<Transform> __Game_Objects_Transform_RO_ComponentTypeHandle;
-
-            [ReadOnly]
-            public ComponentTypeHandle<Temp> __Game_Tools_Temp_RO_ComponentTypeHandle;
-
-            [ReadOnly]
-            public BufferLookup<ConnectedEdge> __Game_Net_ConnectedEdge_RO_BufferLookup;
-
-            [ReadOnly]
-            public BufferLookup<InstalledUpgrade> __Game_Buildings_InstalledUpgrade_RO_BufferLookup;
-
-            [ReadOnly]
-            public ComponentLookup<LocalTransformCache> __Game_Tools_LocalTransformCache_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Edge> __Game_Net_Edge_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Game.Net.Node> __Game_Net_Node_RO_ComponentLookup;
 
             [ReadOnly]
             public ComponentLookup<Curve> __Game_Net_Curve_RO_ComponentLookup;
 
-            [ReadOnly]
-            public ComponentLookup<Game.Tools.EditorContainer> __Game_Tools_EditorContainer_RO_ComponentLookup;
+            public ComponentLookup<ZoningInfo> __Game_Zoning_Info_RW_ComponentLookup;
 
-            [ReadOnly]
-            public ComponentLookup<Transform> __Game_Objects_Transform_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Game.Objects.Elevation> __Game_Objects_Elevation_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Attached> __Game_Objects_Attached_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Position> __Game_Routes_Position_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Connected> __Game_Routes_Connected_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Icon> __Game_Notifications_Icon_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<PrefabRef> __Game_Prefabs_PrefabRef_RO_ComponentLookup;
-
-            [ReadOnly]
-            public BufferLookup<Game.Areas.Node> __Game_Areas_Node_RO_BufferLookup;
-
-            [ReadOnly]
-            public BufferLookup<RouteWaypoint> __Game_Routes_RouteWaypoint_RO_BufferLookup;
-
-            [ReadOnly]
-            public BufferLookup<AggregateElement> __Game_Net_AggregateElement_RO_BufferLookup;
-
-            [ReadOnly]
-            public ComponentTypeHandle<Owner> __Game_Common_Owner_RO_ComponentTypeHandle;
-
-            [ReadOnly]
-            public ComponentLookup<Temp> __Game_Tools_Temp_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Owner> __Game_Common_Owner_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Target> __Game_Common_Target_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Debug> __Game_Tools_Debug_RO_ComponentLookup;
-
-            [ReadOnly]
-            public ComponentLookup<Vehicle> __Game_Vehicles_Vehicle_RO_ComponentLookup;
+            public BufferLookup<SubBlock> __Game_SubBlock_RW_BufferLookup;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void __AssignHandles(ref SystemState state)
             {
-                __Game_Objects_Transform_RO_ComponentTypeHandle = state.GetComponentTypeHandle<Transform>(isReadOnly: true);
-                __Game_Tools_Temp_RO_ComponentTypeHandle = state.GetComponentTypeHandle<Temp>(isReadOnly: true);
-                __Game_Net_ConnectedEdge_RO_BufferLookup = state.GetBufferLookup<ConnectedEdge>(isReadOnly: true);
-                __Game_Buildings_InstalledUpgrade_RO_BufferLookup = state.GetBufferLookup<InstalledUpgrade>(isReadOnly: true);
-                __Game_Tools_LocalTransformCache_RO_ComponentLookup = state.GetComponentLookup<LocalTransformCache>(isReadOnly: true);
-                __Game_Net_Edge_RO_ComponentLookup = state.GetComponentLookup<Edge>(isReadOnly: true);
-                __Game_Net_Node_RO_ComponentLookup = state.GetComponentLookup<Game.Net.Node>(isReadOnly: true);
                 __Game_Net_Curve_RO_ComponentLookup = state.GetComponentLookup<Curve>(isReadOnly: true);
-                __Game_Tools_EditorContainer_RO_ComponentLookup = state.GetComponentLookup<Game.Tools.EditorContainer>(isReadOnly: true);
-                __Game_Objects_Transform_RO_ComponentLookup = state.GetComponentLookup<Transform>(isReadOnly: true);
-                __Game_Objects_Elevation_RO_ComponentLookup = state.GetComponentLookup<Game.Objects.Elevation>(isReadOnly: true);
-                __Game_Objects_Attached_RO_ComponentLookup = state.GetComponentLookup<Attached>(isReadOnly: true);
-                __Game_Routes_Position_RO_ComponentLookup = state.GetComponentLookup<Position>(isReadOnly: true);
-                __Game_Routes_Connected_RO_ComponentLookup = state.GetComponentLookup<Connected>(isReadOnly: true);
-                __Game_Notifications_Icon_RO_ComponentLookup = state.GetComponentLookup<Icon>(isReadOnly: true);
-                __Game_Prefabs_PrefabRef_RO_ComponentLookup = state.GetComponentLookup<PrefabRef>(isReadOnly: true);
-                __Game_Areas_Node_RO_BufferLookup = state.GetBufferLookup<Game.Areas.Node>(isReadOnly: true);
-                __Game_Routes_RouteWaypoint_RO_BufferLookup = state.GetBufferLookup<RouteWaypoint>(isReadOnly: true);
-                __Game_Net_AggregateElement_RO_BufferLookup = state.GetBufferLookup<AggregateElement>(isReadOnly: true);
-                __Game_Common_Owner_RO_ComponentTypeHandle = state.GetComponentTypeHandle<Owner>(isReadOnly: true);
-                __Game_Tools_Temp_RO_ComponentLookup = state.GetComponentLookup<Temp>(isReadOnly: true);
-                __Game_Common_Owner_RO_ComponentLookup = state.GetComponentLookup<Owner>(isReadOnly: true);
-                __Game_Common_Target_RO_ComponentLookup = state.GetComponentLookup<Target>(isReadOnly: true);
-                __Game_Tools_Debug_RO_ComponentLookup = state.GetComponentLookup<Debug>(isReadOnly: true);
-                __Game_Vehicles_Vehicle_RO_ComponentLookup = state.GetComponentLookup<Vehicle>(isReadOnly: true);
+                __Game_Zoning_Info_RW_ComponentLookup = state.GetComponentLookup<ZoningInfo>(isReadOnly: false);
+                __Game_SubBlock_RW_BufferLookup = state.GetBufferLookup<SubBlock>(isReadOnly: false);
             }
-        }
 
-        struct UpdateExistingZoning : IJob
-        {
-            [ReadOnly]
-            public EntityCommandBuffer commandBuffer;
-
-            [ReadOnly]
-            public NativeQueue<Entity> entities;
-
-            public void Execute()
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void __UpdateComponents(ref SystemState state)
             {
-                while (entities.TryDequeue(out Entity entity))
-                {
-                    this.getLogger().Info("Adding Zoning Update Required Component to entity");
-                    commandBuffer.AddComponent<ZoningUpdateRequired>(entity);
-                }
-
+                __Game_Net_Curve_RO_ComponentLookup.Update(ref state);
+                __Game_Zoning_Info_RW_ComponentLookup.Update(ref state);
+                __Game_SubBlock_RW_BufferLookup.Update(ref state);
             }
         }
     }
