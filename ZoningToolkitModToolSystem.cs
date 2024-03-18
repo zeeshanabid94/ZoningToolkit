@@ -20,7 +20,9 @@ using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine.Scripting;
 using ZoningToolkit.Components;
+using ZoningToolkit.utils;
 using ZoningToolkit.Utilties;
+using static Colossal.IO.AssetDatabase.AtlasFrame;
 
 namespace ZoningToolkit
 {
@@ -43,6 +45,91 @@ namespace ZoningToolkit
         {
             this.commandBuffer.RemoveComponent<Highlighted>(this.entityToUnhighlight);
             this.commandBuffer.AddComponent<Updated>(this.entityToUnhighlight);
+        }
+    }
+
+    public struct BackwardsCompatibilityZoningInfo : IJob
+    {
+        public Entity backwardsCompatibilityEntity;
+        public ComponentLookup<Curve> curveComponentLookup;
+        public ComponentLookup<ZoningInfo> zoningInfoComponentLookup;
+        public BufferLookup<SubBlock> subBlockBufferLookup;
+        public ComponentLookup<Block> blockComponentLookup;
+        public EntityCommandBuffer entityCommandBuffer;
+
+        public void Execute()
+        {
+            if (zoningInfoComponentLookup.HasComponent(backwardsCompatibilityEntity))
+            {
+                this.getLogger().Info("Nothing to do for this entity since it already has ZoningInfo component.");
+            } else
+            {
+                // Calculate if there blocks on one side or both sides of the curve
+                if (curveComponentLookup.HasComponent(backwardsCompatibilityEntity))
+                {
+                    Curve curve = curveComponentLookup[backwardsCompatibilityEntity];
+
+                    bool leftBlock = false;
+                    bool rightBlock = false;
+
+                    if (subBlockBufferLookup.HasBuffer(backwardsCompatibilityEntity))
+                    {
+                        DynamicBuffer<SubBlock> subBlockBuffer = subBlockBufferLookup[backwardsCompatibilityEntity];
+
+                        foreach (var item in subBlockBuffer)
+                        {
+                            Block block = blockComponentLookup[item.m_SubBlock];
+
+                            float dotProduct = BlockUtils.blockCurveDotProduct(block, curve);
+
+                            if (dotProduct > 0)
+                            {
+                                // block is on the left of curve
+                                if (block.m_Size.y > 0)
+                                {
+                                    leftBlock = true;
+                                }
+                            }
+                            else
+                            {
+                                // block is on the right of curve
+                                if (block.m_Size.y > 0)
+                                {
+                                    rightBlock = true;
+                                }
+                            }
+                            this.entityCommandBuffer.AddComponent<ZoningInfoUpdated>(item.m_SubBlock);
+                        }
+                    }
+
+                    if (leftBlock && rightBlock)
+                    {
+                        this.entityCommandBuffer.AddComponent(backwardsCompatibilityEntity, new ZoningInfo()
+                        {
+                            zoningMode = ZoningMode.Default
+                        });
+                    } else if (rightBlock)
+                    {
+                        this.entityCommandBuffer.AddComponent(backwardsCompatibilityEntity, new ZoningInfo()
+                        {
+                            zoningMode = ZoningMode.Right
+                        });
+                    } else if (leftBlock)
+                    {
+                        this.entityCommandBuffer.AddComponent(backwardsCompatibilityEntity, new ZoningInfo()
+                        {
+                            zoningMode = ZoningMode.Left
+                        });
+                    } else
+                    {
+                        this.entityCommandBuffer.AddComponent(backwardsCompatibilityEntity, new ZoningInfo()
+                        {
+                            zoningMode = ZoningMode.None
+                        });
+                    }
+                }
+                
+            }
         }
     }
 
@@ -235,6 +322,17 @@ namespace ZoningToolkit
                         commandBuffer = this.onUpdateMemory.commandBufferSystem
                     }.Schedule(onUpdateMemory.currentInputDeps);
                     this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(highlightJob, this.onUpdateMemory.currentInputDeps);
+
+                    JobHandle backwardsCompatJob = new BackwardsCompatibilityZoningInfo()
+                    {
+                        curveComponentLookup = this.typeHandle.__Game_Net_Curve_RO_ComponentLookup,
+                        zoningInfoComponentLookup = this.typeHandle.__Game_Zoning_Info_RW_ComponentLookup,
+                        entityCommandBuffer = this.onUpdateMemory.commandBufferSystem,
+                        subBlockBufferLookup = this.typeHandle.__Game_SubBlock_RW_BufferLookup,
+                        backwardsCompatibilityEntity = entity,
+                        blockComponentLookup = this.typeHandle.__Game_Block_RW_ComponentLookup
+                    }.Schedule(onUpdateMemory.currentInputDeps);
+                    this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(backwardsCompatJob, this.onUpdateMemory.currentInputDeps);
                 }
             } else
             {
@@ -358,12 +456,15 @@ namespace ZoningToolkit
 
             public BufferLookup<SubBlock> __Game_SubBlock_RW_BufferLookup;
 
+            public ComponentLookup<Block> __Game_Block_RW_ComponentLookup;
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void __AssignHandles(ref SystemState state)
             {
                 __Game_Net_Curve_RO_ComponentLookup = state.GetComponentLookup<Curve>(isReadOnly: true);
                 __Game_Zoning_Info_RW_ComponentLookup = state.GetComponentLookup<ZoningInfo>(isReadOnly: false);
                 __Game_SubBlock_RW_BufferLookup = state.GetBufferLookup<SubBlock>(isReadOnly: false);
+                __Game_Block_RW_ComponentLookup = state.GetComponentLookup<Block>(isReadOnly: false);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -372,6 +473,7 @@ namespace ZoningToolkit
                 __Game_Net_Curve_RO_ComponentLookup.Update(ref state);
                 __Game_Zoning_Info_RW_ComponentLookup.Update(ref state);
                 __Game_SubBlock_RW_BufferLookup.Update(ref state);
+                __Game_Block_RW_ComponentLookup.Update(ref state);
             }
         }
     }

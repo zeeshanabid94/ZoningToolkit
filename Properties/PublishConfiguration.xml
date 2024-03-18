@@ -6,9 +6,10 @@
 	<!--Short description of the mod-->
 	<ShortDescription Value="A tool to control zoning on roads for City Skylines 2." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
-	<!--LongDescription Value="This tool lets you control the zoning on the roads for your cities. You don't have to see broken grids anymore." /-->
+	<!--LongDescription Value="This tool lets you control the zoning on the roads for your cities." /-->
 	<LongDescription>
-This tool lets you control the zoning on the roads for your cities. You don't have to see broken grids anymore.
+This tool lets you control the zoning on the roads for your cities. You can enable zones on both sides of roads, on any one side or no side at all.
+Gives you the ability to place roads close together and don't have zones overlapping each other.
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />

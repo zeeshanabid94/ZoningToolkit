@@ -16,6 +16,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
 using ZoningToolkit.Components;
+using ZoningToolkit.utils;
 using ZoningToolkit.Utilties;
 
 namespace ZoningToolkit.Systems
@@ -277,17 +278,13 @@ namespace ZoningToolkit.Systems
                                 logger.Info($"Block direction ${block.m_Direction}");
                                 logger.Info($"Block position ${block.m_Position}");
                                 logger.Info($"Valid Area: ${validArea.m_Area}");
-                                MathUtils.Distance(curve.m_Bezier.xz, block.m_Position.xz, out float closest_point_t);
 
-                                Vector2 tangentVectorAtCurve = GetTangent(curve.m_Bezier.xz, closest_point_t);
-                                Vector2 perpendicularToTangent = new Vector2(tangentVectorAtCurve.y, -tangentVectorAtCurve.x);
-
-                                float dotProduct = Vector2.Dot(perpendicularToTangent, block.m_Direction);
+                                float dotProduct = BlockUtils.blockCurveDotProduct(block, curve);
 
                                 logger.Info($"Dot product: ${dotProduct}");
                                 logger.Info($"Zoning mode is ${entityZoningInfo.zoningMode}");
 
-                                editBlockSizes(dotProduct, entityZoningInfo, validArea, block, entity);
+                                BlockUtils.deleteBlock(dotProduct, entityZoningInfo, entity, entityCommandBuffer);
 
                                 entityCommandBuffer.AddComponent(owner.m_Owner, entityZoningInfo);
                                 entityCommandBuffer.RemoveComponent<ZoningInfoUpdated>(owner.m_Owner);
@@ -300,103 +297,6 @@ namespace ZoningToolkit.Systems
                         
                     }
                 }
-            }
-
-            private void editBlockSizes(float dotProduct, ZoningInfo newZoningInfo, ValidArea validArea, Block block, Entity entity)
-            {
-                if (dotProduct > 0)
-                {
-                    if (newZoningInfo.zoningMode == ZoningMode.Right || newZoningInfo.zoningMode == ZoningMode.None)
-                    {
-                        // entityCommandBuffer.AddComponent(entity, new Deleted());
-                        // entityCommandBuffer.RemoveComponent<Updated>(entity);
-                        // entityCommandBuffer.RemoveComponent<Created>(entity);
-
-                        validArea.m_Area.w = 0;
-
-                        entityCommandBuffer.SetComponent(entity, validArea);
-
-                        block.m_Size.y = 0;
-
-                        entityCommandBuffer.SetComponent(entity, block);
-                    }
-                    else
-                    {
-                        validArea.m_Area.w = 6;
-
-                        entityCommandBuffer.SetComponent(entity, validArea);
-
-                        block.m_Size.y = 6;
-
-                        entityCommandBuffer.SetComponent(entity, block);
-                    }
-                }
-                else
-                {
-                    if (newZoningInfo.zoningMode == ZoningMode.Left || newZoningInfo.zoningMode == ZoningMode.None)
-                    {
-                        // entityCommandBuffer.AddComponent(entity, new Deleted());
-                        // entityCommandBuffer.RemoveComponent<Updated>(entity);
-                        // entityCommandBuffer.RemoveComponent<Created>(entity);
-
-                        validArea.m_Area.w = 0;
-
-                        entityCommandBuffer.SetComponent(entity, validArea);
-
-                        block.m_Size.y = 0;
-
-                        entityCommandBuffer.SetComponent(entity, block);
-                    }
-                    else
-                    {
-                        validArea.m_Area.w = 6;
-
-                        entityCommandBuffer.SetComponent(entity, validArea);
-
-                        block.m_Size.y = 6;
-
-                        entityCommandBuffer.SetComponent(entity, block);
-                    }
-                }
-
-            }
-
-            private bool isAnyCellOccupied(ref DynamicBuffer<Cell> cells, ref Block block, ref ValidArea validArea)
-            {
-                logger.Info($"Block size x: ${block.m_Size.x}, y: ${block.m_Size.y}");
-                logger.Info($"Valid area x: ${validArea.m_Area.x}, y: ${validArea.m_Area.y}, z: ${validArea.m_Area.z}, w: ${validArea.m_Area.w}");
-
-                if (validArea.m_Area.y * validArea.m_Area.w == 0)
-                {
-                    return false;
-                }
-
-                for (int z = validArea.m_Area.z; z < validArea.m_Area.w; z++)
-                {
-                    for (int x = validArea.m_Area.x; x < validArea.m_Area.y; x++)
-                    {
-                        logger.Info($"z: ${z}, x: ${x}");
-
-                        int index = z * block.m_Size.x + x;
-                        Cell cell = cells[index];
-
-                        if ((cell.m_State & CellFlags.Occupied) != 0)
-                        {
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
-            }
-
-            private Vector2 GetTangent(Bezier4x2 curve, float t)
-            {
-                // Calculate the derivative of the Bezier curve
-                float2 derivative = 3 * math.pow(1 - t, 2) * (curve.b - curve.a) +
-                                        6 * (1 - t) * t * (curve.c - curve.b) +
-                                        3 * math.pow(t, 2) * (curve.d - curve.c);
-                return new Vector2(derivative.x, derivative.y);
             }
         }
 
@@ -549,25 +449,19 @@ namespace ZoningToolkit.Systems
                             this.getLogger().Info($"Block position ${block.m_Position}");
                             this.getLogger().Info($"Valid Area: ${validArea.m_Area}");
 
-                            MathUtils.Distance(curve.m_Bezier.xz, block.m_Position.xz, out float closest_point_t);
-
-                            Vector2 tangentVectorAtCurve = GetTangent(curve.m_Bezier.xz, closest_point_t);
-                            Vector2 perpendicularToTangent = new Vector2(tangentVectorAtCurve.y, -tangentVectorAtCurve.x);
-
-                            float dotProduct = Vector2.Dot(perpendicularToTangent, block.m_Direction);
+                            float dotProduct = BlockUtils.blockCurveDotProduct(block, curve);
 
                             this.getLogger().Info($"Dot product: ${dotProduct}");
                             this.getLogger().Info($"Zoning mode is ${entityZoningInfo.zoningMode}");
 
-
-                            if (isAnyCellOccupied(ref cells, ref block, ref validArea))
+                            if (BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea))
                             {
                                 // Can't replace occupied cells. So skip.
                                 this.getLogger().Info("Cells are occupied. Replacing will not happen.");
                                 continue;
                             }
 
-                            editBlockSizes(dotProduct, entityZoningInfo, validArea, block, entity);
+                            BlockUtils.deleteBlock(dotProduct, entityZoningInfo, entity, entityCommandBuffer);
 
                             entityCommandBuffer.AddComponent(owner.m_Owner, entityZoningInfo);
                         }
@@ -581,103 +475,6 @@ namespace ZoningToolkit.Systems
                 stopwatch.Stop();
 
                 this.getLogger().Info($"Job took ${stopwatch.ElapsedMilliseconds}");
-            }
-
-            private void editBlockSizes(float dotProduct, ZoningInfo newZoningInfo, ValidArea validArea, Block block, Entity entity)
-            {
-                if (dotProduct > 0)
-                {
-                    if (newZoningInfo.zoningMode == ZoningMode.Right || newZoningInfo.zoningMode == ZoningMode.None)
-                    {
-                        // entityCommandBuffer.AddComponent(entity, new Deleted());
-                        // entityCommandBuffer.RemoveComponent<Updated>(entity);
-                        // entityCommandBuffer.RemoveComponent<Created>(entity);
-
-                        validArea.m_Area.w = 0;
-
-                        entityCommandBuffer.SetComponent(entity, validArea);
-
-                        block.m_Size.y = 0;
-
-                        entityCommandBuffer.SetComponent(entity, block);
-                    }
-                    else
-                    {
-                        validArea.m_Area.w = 6;
-
-                        entityCommandBuffer.SetComponent(entity, validArea);
-
-                        block.m_Size.y = 6;
-
-                        entityCommandBuffer.SetComponent(entity, block);
-                    }
-                }
-                else
-                {
-                    if (newZoningInfo.zoningMode == ZoningMode.Left || newZoningInfo.zoningMode == ZoningMode.None)
-                    {
-                        // entityCommandBuffer.AddComponent(entity, new Deleted());
-                        // entityCommandBuffer.RemoveComponent<Updated>(entity);
-                        // entityCommandBuffer.RemoveComponent<Created>(entity);
-
-                        validArea.m_Area.w = 0;
-
-                        entityCommandBuffer.SetComponent(entity, validArea);
-
-                        block.m_Size.y = 0;
-
-                        entityCommandBuffer.SetComponent(entity, block);
-                    }
-                    else
-                    {
-                        validArea.m_Area.w = 6;
-
-                        entityCommandBuffer.SetComponent(entity, validArea);
-
-                        block.m_Size.y = 6;
-
-                        entityCommandBuffer.SetComponent(entity, block);
-                    }
-                }
-
-            }
-
-            private bool isAnyCellOccupied(ref DynamicBuffer<Cell> cells, ref Block block, ref ValidArea validArea)
-            {
-                this.getLogger().Info($"Block size x: ${block.m_Size.x}, y: ${block.m_Size.y}");
-                this.getLogger().Info($"Valid area x: ${validArea.m_Area.x}, y: ${validArea.m_Area.y}, z: ${validArea.m_Area.z}, w: ${validArea.m_Area.w}");
-
-                if (validArea.m_Area.y * validArea.m_Area.w == 0)
-                {
-                    return false;
-                }
-
-                for (int z = validArea.m_Area.z; z < validArea.m_Area.w; z++)
-                {
-                    for (int x = validArea.m_Area.x; x < validArea.m_Area.y; x++)
-                    {
-                        this.getLogger().Info($"z: ${z}, x: ${x}");
-
-                        int index = z * block.m_Size.x + x;
-                        Cell cell = cells[index];
-
-                        if ((cell.m_State & CellFlags.Occupied) != 0)
-                        {
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
-            }
-
-            private Vector2 GetTangent(Bezier4x2 curve, float t)
-            {
-                // Calculate the derivative of the Bezier curve
-                float2 derivative = 3 * math.pow(1 - t, 2) * (curve.b - curve.a) +
-                                        6 * (1 - t) * t * (curve.c - curve.b) +
-                                        3 * math.pow(t, 2) * (curve.d - curve.c);
-                return new Vector2(derivative.x, derivative.y);
             }
 
         }
