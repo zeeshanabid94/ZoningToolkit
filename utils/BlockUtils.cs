@@ -1,26 +1,21 @@
-﻿using Colossal.Logging;
-using Colossal.Mathematics;
+﻿using Colossal.Mathematics;
 using Game.Common;
 using Game.Net;
 using Game.Zones;
 using Unity.Entities;
-using Unity.Entities.UniversalDelegates;
 using Unity.Mathematics;
 using UnityEngine;
 using ZoningToolkit.Components;
 using ZoningToolkit.Utilties;
-using static Colossal.IO.AssetDatabase.AtlasFrame;
-using static Game.UI.NameSystem;
 
 namespace ZoningToolkit.utils
 {
     internal class BlockUtils
     {
-        private static ILog logger = LogManager.GetLogger($"{nameof(ZoningToolkit)}.BlockUtils").SetShowsErrorsInUI(false);
         public static float blockCurveDotProduct(Block block, Curve curve)
         {
-            logger.getLogger().Info($"Block direction ${block.m_Direction}");
-            logger.getLogger().Info($"Block position ${block.m_Position}");
+            LogUtils.getLogger().Info($"Block direction ${block.m_Direction}");
+            LogUtils.getLogger().Info($"Block position ${block.m_Position}");
 
             MathUtils.Distance(curve.m_Bezier.xz, block.m_Position.xz, out float closest_point_t);
 
@@ -29,7 +24,7 @@ namespace ZoningToolkit.utils
 
             float dotProduct = Vector2.Dot(perpendicularToTangent, block.m_Direction);
 
-            logger.getLogger().Info($"Dot product: ${dotProduct}");
+            LogUtils.getLogger().Info($"Dot product: ${dotProduct}");
 
             return dotProduct;
         }
@@ -40,6 +35,8 @@ namespace ZoningToolkit.utils
             {
                 if (newZoningInfo.zoningMode == ZoningMode.Right || newZoningInfo.zoningMode == ZoningMode.None)
                 {
+                    entityCommandBuffer.RemoveComponent<Updated>(blockEntity);
+                    entityCommandBuffer.RemoveComponent<Created>(blockEntity);
                     entityCommandBuffer.AddComponent(blockEntity, new Deleted());
                 }
             }
@@ -47,6 +44,8 @@ namespace ZoningToolkit.utils
             {
                 if (newZoningInfo.zoningMode == ZoningMode.Left || newZoningInfo.zoningMode == ZoningMode.None)
                 {
+                    entityCommandBuffer.RemoveComponent<Updated>(blockEntity);
+                    entityCommandBuffer.RemoveComponent<Created>(blockEntity);
                     entityCommandBuffer.AddComponent(blockEntity, new Deleted());
                 }
             }
@@ -113,8 +112,8 @@ namespace ZoningToolkit.utils
 
         public static bool isAnyCellOccupied(ref DynamicBuffer<Cell> cells, ref Block block, ref ValidArea validArea)
         {
-            logger.getLogger().Info($"Block size x: ${block.m_Size.x}, y: ${block.m_Size.y}");
-            logger.getLogger().Info($"Valid area x: ${validArea.m_Area.x}, y: ${validArea.m_Area.y}, z: ${validArea.m_Area.z}, w: ${validArea.m_Area.w}");
+            LogUtils.getLogger().Info($"Block size x: ${block.m_Size.x}, y: ${block.m_Size.y}");
+            LogUtils.getLogger().Info($"Valid area x: ${validArea.m_Area.x}, y: ${validArea.m_Area.y}, z: ${validArea.m_Area.z}, w: ${validArea.m_Area.w}");
 
             if (validArea.m_Area.y * validArea.m_Area.w == 0)
             {
@@ -125,7 +124,7 @@ namespace ZoningToolkit.utils
             {
                 for (int x = validArea.m_Area.x; x < validArea.m_Area.y; x++)
                 {
-                    logger.getLogger().Info($"z: ${z}, x: ${x}");
+                    LogUtils.getLogger().Info($"z: ${z}, x: ${x}");
 
                     int index = z * block.m_Size.x + x;
                     Cell cell = cells[index];

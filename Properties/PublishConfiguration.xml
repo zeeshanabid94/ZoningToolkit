@@ -10,17 +10,29 @@
 	<LongDescription>
 This tool lets you control the zoning on the roads for your cities. You can enable zones on both sides of roads, on any one side or no side at all.
 Gives you the ability to place roads close together and don't have zones overlapping each other.
+
+Usage:
+- When you install the Mod, the Mod Window will open if the road you have selected supports zoning. Please note that currently, you can only configure the zones of roads that 
+have zoning support in the game. The Mod does not enable Zoning on Highways.
+- From the Mod window, you can select the Zoning option. From then on, every new road you make will have the new zoning option applied to it.
+- To update the zoning of existing roads, you can clock on the Zoning Tool button to start the Zoning Tool. After that, you can select the zoning option and then click or click and drag
+to edit the zoning of existing roads. Please note that if you have buildings on the road, the zoning will not be toggled. This is to prevent the buildings from being despawned
+when the zoning is removed.
+
+Known Issues:
+- When using the Zoning Tool to change zoning, the game can lag for a second. This is due to the nature of job scheduling in the game, i.e the jobs
+don't use burst compile right now.
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
 	<Screenshot Value="" />
 	<!--Tag, can be set multiple times-->
-	<Tag Value="" />
+	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0" />
+	<ModVersion Value="0.6.0" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.0.*" />
 	<!--Dependency for the mod, can be set multiple times-->
@@ -30,5 +42,7 @@ Gives you the ability to place roads close together and don't have zones overlap
 	<!--ChangeLog>
 	</ChangeLog-->
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
-	<ExternalLink Type="" Url="" />
+	<!-- <ExternalLink Type="discord" Url="stormborn0048" />
+	<ExternalLink Type="github" Url="coming_soon" />
+	<ExternalLink Type="youtube" Url="coming_soon" /> -->
 </Publish>

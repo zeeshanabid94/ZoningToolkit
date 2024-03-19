@@ -225,7 +225,6 @@ namespace ZoningToolkit.Systems
 
         private struct UpdateZoningInfo : IJobChunk
         {
-            private readonly static ILog logger = LogManager.GetLogger($"{nameof(ZoningToolkit)}.UpdateZoneData").SetShowsErrorsInUI(false);
             [ReadOnly]
             public ZoningMode zoningMode;
             [ReadOnly]
@@ -243,7 +242,7 @@ namespace ZoningToolkit.Systems
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                logger.Info("Executing UpdateZoningInfo Job.");
+                this.getLogger().Info("Executing UpdateZoningInfo Job.");
                 Stopwatch stopwatch = new Stopwatch();
 
                 stopwatch.Start();
@@ -266,28 +265,39 @@ namespace ZoningToolkit.Systems
                         {
                             entityZoningInfo = zoningInfoComponentLookup[owner.m_Owner];
 
-                            if (updatedLookup.HasComponent(owner.m_Owner))
+                            this.getLogger().Info($"Found Zoning Info {entityZoningInfo}");
+
+                            if (zoningInfoUpdateComponentLookup.HasComponent(entity))
                             {
+                                this.getLogger().Info("Found ZoningInfoUpdate component on owner.");
 
                                 Curve curve = curveComponentLookup[owner.m_Owner];
                                 Block block = blocks[pair.Index];
-                                logger.Info($"Processing Curve a: ${curve.m_Bezier.a}, b: ${curve.m_Bezier.b}, c: ${curve.m_Bezier.c}, d: ${curve.m_Bezier.d}, length: ${curve.m_Length}");
-                                logger.Info($"Entity is {entity}.");
+                                this.getLogger().Info($"Processing Curve a: ${curve.m_Bezier.a}, b: ${curve.m_Bezier.b}, c: ${curve.m_Bezier.c}, d: ${curve.m_Bezier.d}, length: ${curve.m_Length}");
+                                this.getLogger().Info($"Entity is {entity}.");
                                 DynamicBuffer<Cell> cells = cellBuffers[pair.Index];
                                 ValidArea validArea = validAreas[pair.Index];
-                                logger.Info($"Block direction ${block.m_Direction}");
-                                logger.Info($"Block position ${block.m_Position}");
-                                logger.Info($"Valid Area: ${validArea.m_Area}");
+                                this.getLogger().Info($"Block direction ${block.m_Direction}");
+                                this.getLogger().Info($"Block position ${block.m_Position}");
+                                this.getLogger().Info($"Valid Area: ${validArea.m_Area}");
 
                                 float dotProduct = BlockUtils.blockCurveDotProduct(block, curve);
 
-                                logger.Info($"Dot product: ${dotProduct}");
-                                logger.Info($"Zoning mode is ${entityZoningInfo.zoningMode}");
+                                this.getLogger().Info($"Dot product: ${dotProduct}");
+                                this.getLogger().Info($"Zoning mode is ${entityZoningInfo.zoningMode}");
 
-                                BlockUtils.deleteBlock(dotProduct, entityZoningInfo, entity, entityCommandBuffer);
+                                if (BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea))
+                                {
+                                    // Can't replace occupied cells. So skip.
+                                    this.getLogger().Info("Cells are occupied. Replacing will not happen.");
+                                } else
+                                {
+                                    BlockUtils.editBlockSizes(dotProduct, entityZoningInfo, validArea, block, entity, entityCommandBuffer);
 
-                                entityCommandBuffer.AddComponent(owner.m_Owner, entityZoningInfo);
-                                entityCommandBuffer.RemoveComponent<ZoningInfoUpdated>(owner.m_Owner);
+                                    entityCommandBuffer.AddComponent(owner.m_Owner, entityZoningInfo);
+                                }
+                                
+                                entityCommandBuffer.RemoveComponent<ZoningInfoUpdated>(entity);
                             }
                         } else
                         {
@@ -461,7 +471,7 @@ namespace ZoningToolkit.Systems
                                 continue;
                             }
 
-                            BlockUtils.deleteBlock(dotProduct, entityZoningInfo, entity, entityCommandBuffer);
+                            BlockUtils.editBlockSizes(dotProduct, entityZoningInfo, validArea, block, entity, entityCommandBuffer);
 
                             entityCommandBuffer.AddComponent(owner.m_Owner, entityZoningInfo);
                         }

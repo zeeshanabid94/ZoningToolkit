@@ -64,6 +64,7 @@ namespace ZoningToolkit
                 this.getLogger().Info("Nothing to do for this entity since it already has ZoningInfo component.");
             } else
             {
+                this.getLogger().Info("Making entity backwards compatible.");
                 // Calculate if there blocks on one side or both sides of the curve
                 if (curveComponentLookup.HasComponent(backwardsCompatibilityEntity))
                 {
@@ -76,8 +77,11 @@ namespace ZoningToolkit
                     {
                         DynamicBuffer<SubBlock> subBlockBuffer = subBlockBufferLookup[backwardsCompatibilityEntity];
 
+                        this.getLogger().Info("Going to iterate through blocks.");
+
                         foreach (var item in subBlockBuffer)
                         {
+                            this.getLogger().Info("Processing block.");
                             Block block = blockComponentLookup[item.m_SubBlock];
 
                             float dotProduct = BlockUtils.blockCurveDotProduct(block, curve);
@@ -98,10 +102,12 @@ namespace ZoningToolkit
                                     rightBlock = true;
                                 }
                             }
-                            this.entityCommandBuffer.AddComponent<ZoningInfoUpdated>(item.m_SubBlock);
+                            /*this.entityCommandBuffer.AddComponent<ZoningInfoUpdated>(item.m_SubBlock);*/
+                            this.getLogger().Info("Block processed.");
                         }
                     }
 
+                    this.getLogger().Info("Setting Zoning info now.");
                     if (leftBlock && rightBlock)
                     {
                         this.entityCommandBuffer.AddComponent(backwardsCompatibilityEntity, new ZoningInfo()
@@ -244,7 +250,7 @@ namespace ZoningToolkit
         {
             JobHandle updateZoningInfoJob = new UpdateZoningInfo()
             {
-                curveComponentLookup = this.typeHandle.__Game_Net_Curve_RO_ComponentLookup,
+                curveComponentLookup = this.typeHandle.__Game_Net_Curve_RW_ComponentLookup,
                 zoningInfoComponentLookup = this.typeHandle.__Game_Zoning_Info_RW_ComponentLookup,
                 entityCommandBuffer = this.onUpdateMemory.commandBufferSystem,
                 entityHashSet = this.workingState.lastRaycastEntities,
@@ -318,21 +324,21 @@ namespace ZoningToolkit
                     this.workingState.lastRaycastEntity = entity;
                     JobHandle highlightJob = new HighlightEntitiesJob()
                     {
-                        entityToHighlight = entity,
+                        entityToHighlight = this.workingState.lastRaycastEntity,
                         commandBuffer = this.onUpdateMemory.commandBufferSystem
                     }.Schedule(onUpdateMemory.currentInputDeps);
                     this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(highlightJob, this.onUpdateMemory.currentInputDeps);
 
-                    JobHandle backwardsCompatJob = new BackwardsCompatibilityZoningInfo()
+                    /*JobHandle backwardsCompatJob = new BackwardsCompatibilityZoningInfo()
                     {
-                        curveComponentLookup = this.typeHandle.__Game_Net_Curve_RO_ComponentLookup,
+                        curveComponentLookup = this.typeHandle.__Game_Net_Curve_RW_ComponentLookup,
                         zoningInfoComponentLookup = this.typeHandle.__Game_Zoning_Info_RW_ComponentLookup,
                         entityCommandBuffer = this.onUpdateMemory.commandBufferSystem,
                         subBlockBufferLookup = this.typeHandle.__Game_SubBlock_RW_BufferLookup,
-                        backwardsCompatibilityEntity = entity,
+                        backwardsCompatibilityEntity = this.workingState.lastRaycastEntity,
                         blockComponentLookup = this.typeHandle.__Game_Block_RW_ComponentLookup
                     }.Schedule(onUpdateMemory.currentInputDeps);
-                    this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(backwardsCompatJob, this.onUpdateMemory.currentInputDeps);
+                    this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(backwardsCompatJob, this.onUpdateMemory.currentInputDeps);*/
                 }
             } else
             {
@@ -406,7 +412,7 @@ namespace ZoningToolkit
             this.toolStateMachine.transition(applyAction, cancelAction);
 
             this.toolOutputBarrier.AddJobHandleForProducer(this.onUpdateMemory.currentInputDeps);
-            return inputDeps;
+            return this.onUpdateMemory.currentInputDeps;
         }
 
         public override PrefabBase GetPrefab()
@@ -450,7 +456,7 @@ namespace ZoningToolkit
         {
 
             [ReadOnly]
-            public ComponentLookup<Curve> __Game_Net_Curve_RO_ComponentLookup;
+            public ComponentLookup<Curve> __Game_Net_Curve_RW_ComponentLookup;
 
             public ComponentLookup<ZoningInfo> __Game_Zoning_Info_RW_ComponentLookup;
 
@@ -461,7 +467,7 @@ namespace ZoningToolkit
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void __AssignHandles(ref SystemState state)
             {
-                __Game_Net_Curve_RO_ComponentLookup = state.GetComponentLookup<Curve>(isReadOnly: true);
+                __Game_Net_Curve_RW_ComponentLookup = state.GetComponentLookup<Curve>(isReadOnly: false);
                 __Game_Zoning_Info_RW_ComponentLookup = state.GetComponentLookup<ZoningInfo>(isReadOnly: false);
                 __Game_SubBlock_RW_BufferLookup = state.GetBufferLookup<SubBlock>(isReadOnly: false);
                 __Game_Block_RW_ComponentLookup = state.GetComponentLookup<Block>(isReadOnly: false);
@@ -470,7 +476,7 @@ namespace ZoningToolkit
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void __UpdateComponents(ref SystemState state)
             {
-                __Game_Net_Curve_RO_ComponentLookup.Update(ref state);
+                __Game_Net_Curve_RW_ComponentLookup.Update(ref state);
                 __Game_Zoning_Info_RW_ComponentLookup.Update(ref state);
                 __Game_SubBlock_RW_BufferLookup.Update(ref state);
                 __Game_Block_RW_ComponentLookup.Update(ref state);
