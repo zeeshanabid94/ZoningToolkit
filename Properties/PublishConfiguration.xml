@@ -1,6 +1,6 @@
 ﻿<Publish>
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
-	<ModId Value="" />
+	<ModId Value="75744" />
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="ZoningToolkit" />
 	<!--Short description of the mod-->
@@ -24,7 +24,7 @@ Known Issues:
 don't use burst compile right now.
 	</LongDescription>
 	<!--Thumbnail-->
-	<Thumbnail Value="Properties/Thumbnail.png" />
+	<Thumbnail Value="Properties/ZoningToolkit.png" />
 	<!--Screenshot, can be set multiple times-->
 	<Screenshot Value="" />
 	<!--Tag, can be set multiple times-->
