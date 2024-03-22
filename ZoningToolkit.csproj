@@ -22,11 +22,6 @@
 	<!--Imports must be after PropertyGroup block-->
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.props" />
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" />
-	<ItemGroup>
-	  <Compile Remove="zoning-toolkit-ui\asdfas\**" />
-	  <EmbeddedResource Remove="zoning-toolkit-ui\asdfas\**" />
-	  <None Remove="zoning-toolkit-ui\asdfas\**" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="Colossal.Mathematics">
@@ -86,5 +81,18 @@
 		<None Include="$(ModPropsFile)" Link="Properties\Mod.props" />
 		<None Include="$(ModTargetsFile)" Link="Properties\Mod.targets" />
 	</ItemGroup>
+
+	<!-- This will build the React UI before building the Mod -->
+	<Target Name="BuildUI" AfterTargets="AfterBuild">
+		<Exec Command="npm run build" WorkingDirectory="$(ProjectDir)/zoning-toolkit-ui" />
+	</Target>
+
+	<Target Name="CopyUIFiles" AfterTargets="DeployWIP">
+		<ItemGroup>
+			<UIFiles Include="bin\UI\**\*.*"/>
+		</ItemGroup>
+
+		<Copy SourceFiles="@(UIFiles)" DestinationFiles="@(UIFiles->'$(DeployDir)\%(RecursiveDir)%(Filename)%(Extension)'"/>
+	</Target>
 
 </Project>
