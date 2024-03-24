@@ -1,6 +1,7 @@
 import { ModRegistrar } from "cs2/modding";
 import { HelloWorldComponent } from "mods/hello-world";
 import { ZoningToolkitPanel, ZoningMode } from "mods/zoning-toolkit-panel";
+import { ButtonComponent } from "./mods/zoning-toolkit-button";
 
 const register: ModRegistrar = (moduleRegistry) => {
     console.log("Registering modules.");
@@ -16,7 +17,9 @@ const register: ModRegistrar = (moduleRegistry) => {
     moduleRegistry.append('Menu', HelloWorldComponent);
 
     const zoningTookitComponent = () => <ZoningToolkitPanel />
+    const zoningToolkitPanelButton = () => <ButtonComponent/>
     moduleRegistry.append('GameTopRight', zoningTookitComponent);
+    moduleRegistry.append('GameBottomRight', zoningToolkitPanelButton);
 }
 
 export default register;

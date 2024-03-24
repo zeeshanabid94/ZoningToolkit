@@ -4,6 +4,9 @@
     <_LastSelectedProfileId>C:\Users\Zeeshan\source\repos\ZoningToolkit\Properties\PublishProfiles\PublishNewVersion.pubxml</_LastSelectedProfileId>
   </PropertyGroup>
   <ItemGroup>
+    <None Update="zoning-toolkit-ui\src\mods\zoning-toolkit-button.tsx">
+      <SubType>Code</SubType>
+    </None>
     <None Update="zoning-toolkit-ui\src\mods\zoning-toolkit-panel.tsx">
       <SubType>Code</SubType>
     </None>
