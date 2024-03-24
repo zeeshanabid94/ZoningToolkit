@@ -2,6 +2,7 @@
 import React from 'react';
 import Draggable from 'react-draggable';
 import * as GameUI from 'cs2/ui';
+import { useModUIStore } from './state';
 export interface ZoningToolkitPanelProps {
     zoningMode: ZoningMode,
     isFocused: Boolean,
@@ -122,6 +123,8 @@ export class ZoningToolkitPanel extends React.Component<{}, ZoningToolkitPanelPr
     }
 
     render() {
+        const uiVisible = useModUIStore.getState().uiVisible;
+
         // Define the styles
         const windowStyle: React.CSSProperties = {
             position: "absolute",
@@ -137,7 +140,7 @@ export class ZoningToolkitPanel extends React.Component<{}, ZoningToolkitPanelPr
             textAlign: 'center',
             transition: 'box-shadow 0.3s ease-in-out',
             pointerEvents: 'auto',
-            display: this.state.isVisible === true ? 'block' : 'none'
+            display: uiVisible === true ? 'block' : 'none'
         };
 
         const buttonStyle = {
