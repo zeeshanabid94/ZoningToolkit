@@ -24,30 +24,39 @@ export const setupSubscriptions = () => {
     // Init subscriptions from Mod UI System
     const subscriptionZoningModeEventString = 'zoning_adjuster_ui_namespace.zoning_mode'
     if (!allSubscriptions.has(subscriptionZoningModeEventString)) {
-        const subscriptionZoningMode = updateEventFromCSharp<string>('zoning_adjuster_ui_namespace', 'zoning_mode', (zoningMode) => {
+        const subscription = updateEventFromCSharp<string>('zoning_adjuster_ui_namespace', 'zoning_mode', (zoningMode) => {
             console.log(`Zoning mode fetched ${zoningMode}`);
             useModUIStore.getState().updateZoningMode(zoningMode);
         })
-        allSubscriptions.set(subscriptionZoningModeEventString, subscriptionZoningMode);
+        allSubscriptions.set(subscriptionZoningModeEventString, subscription);
     }
     
     const subscriptionToolEnabledEventString = 'zoning_adjuster_ui_namespace.tool_enabled'
     if (!allSubscriptions.has(subscriptionToolEnabledEventString)) {
-        const subscriptionToolEnabled = updateEventFromCSharp<boolean>('zoning_adjuster_ui_namespace', 'tool_enabled', (toolEnabled) => {
+        const subscription = updateEventFromCSharp<boolean>('zoning_adjuster_ui_namespace', 'tool_enabled', (toolEnabled) => {
             console.log(`Tool Enabled Toggled ${toolEnabled}`);
             useModUIStore.getState().updateIsToolEnabled(toolEnabled);
         })
-        allSubscriptions.set(subscriptionToolEnabledEventString, subscriptionToolEnabled)
+        allSubscriptions.set(subscriptionToolEnabledEventString, subscription)
     }
 
 
-    const subscriptionVisibleEventString = 'zoning_adjuster_ui_namespace.visible'
+/*    const subscriptionVisibleEventString = 'zoning_adjuster_ui_namespace.visible'
     if (!allSubscriptions.has(subscriptionVisibleEventString)) {
-        const subscriptionVisible = updateEventFromCSharp<boolean>('zoning_adjuster_ui_namespace', 'visible', (visible) => {
+        const subscription = updateEventFromCSharp<boolean>('zoning_adjuster_ui_namespace', 'visible', (visible) => {
             console.log(`UI visibility changed to ${visible}`);
             useModUIStore.getState().updateUiVisible(visible);
         })
-        allSubscriptions.set(subscriptionVisibleEventString, subscriptionVisible)
+        allSubscriptions.set(subscriptionVisibleEventString, subscription)
+    }*/
+
+    const photomodeEventString = 'zoning_adjuster_ui_namespace.photomode'
+    if (!allSubscriptions.has(photomodeEventString)) {
+        const subscription = updateEventFromCSharp<boolean>('zoning_adjuster_ui_namespace', 'photomode', (photomodeEnabled) => {
+            console.log(`Photomode turned on to ${photomodeEnabled}`);
+            useModUIStore.getState().updatePhotomodeActive(photomodeEnabled);
+        })
+        allSubscriptions.set(photomodeEventString, subscription)
     }
 }
 

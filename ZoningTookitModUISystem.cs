@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Colossal.UI.Binding;
 using Game;
 using Game.Prefabs;
+using Game.Rendering;
 using Game.Tools;
 using Game.UI;
 using Unity.Collections;
@@ -29,6 +30,7 @@ namespace ZoningToolkit.Systems
         private ToolSystem toolSystem;
         private NativeQueue<Entity> entitiesToUpdate;
         private ZoningToolkitModToolSystem zoningToolkitModToolSystem;
+        private PhotoModeRenderSystem photoModeRenderSystem;
 
         public override GameMode gameMode => GameMode.Game;
 
@@ -38,6 +40,7 @@ namespace ZoningToolkit.Systems
 
             this.zoningToolkitModSystem = World.GetExistingSystemManaged<ZoningToolkitModSystem>();
             this.toolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
+            this.photoModeRenderSystem = World.GetOrCreateSystemManaged<PhotoModeRenderSystem>();
             this.zoningToolkitModToolSystem = World.GetOrCreateSystemManaged<ZoningToolkitModToolSystem>();
             this.uiState = new UIState()
             {
@@ -52,6 +55,7 @@ namespace ZoningToolkit.Systems
             this.AddUpdateBinding(new GetterValueBinding<string>(this.kGroup, "zoning_mode", () => this.uiState.zoningMode.ToString()));
             this.AddUpdateBinding(new GetterValueBinding<bool>(this.kGroup, "tool_enabled", () => this.uiState.toolEnabled));
             this.AddUpdateBinding(new GetterValueBinding<bool>(this.kGroup, "visible", () => this.uiState.visible));
+            this.AddUpdateBinding(new GetterValueBinding<bool>(this.kGroup, "photomode", () => this.photoModeRenderSystem.Enabled));
 
             this.AddBinding(new TriggerBinding<string>(this.kGroup, "zoning_mode_update", zoningMode => {
                     this.getLogger().Info($"Zoning mode updated to ${zoningMode}.");
@@ -88,7 +92,7 @@ namespace ZoningToolkit.Systems
         {
             this.getLogger().Info("Tool changed!");
 
-            if (tool is NetToolSystem || tool is ZoningToolkitModToolSystem)
+            if (tool is NetToolSystem)
             {
                 if (tool.GetPrefab() is RoadPrefab)
                 {
@@ -101,21 +105,12 @@ namespace ZoningToolkit.Systems
                     if (roadPrefab.m_ZoneBlock != null)
                     {
                         activateModUI = true;
-                    }
-                    else
-                    {
-                        deactivateModUI = true;
+                        return;
                     }
                 }
-                else
-                {
-                    deactivateModUI = true;
-                }
             }
-            else
-            {
-                deactivateModUI = true;
-            }
+
+            deactivateModUI = true;
         }
 
         private void OnPrefabChanged(PrefabBase prefabBase)
@@ -133,10 +128,7 @@ namespace ZoningToolkit.Systems
                 if (roadPrefab.m_ZoneBlock != null)
                 {
                     activateModUI = true;
-                }
-                else
-                {
-                    deactivateModUI = true;
+                    return;
                 }
             }
             else
@@ -149,32 +141,6 @@ namespace ZoningToolkit.Systems
         protected override void OnUpdate()
         {
             base.OnUpdate();
-
-            if (activateModUI)
-            {
-                this.getLogger().Info("Activating Mod UI.");
-
-                // unset the trigger
-                activateModUI = false;
-
-                if (!this.uiState.visible)
-                {
-                   uiState.visible = true;
-                }
-            }
-
-            if (deactivateModUI)
-            {
-                this.getLogger().Info("Deactivating Mod UI.");
-
-                // Unset trigger
-                deactivateModUI = false;
-
-                if (this.uiState.visible)
-                {
-                    this.uiState.visible = false;
-                }
-            }
 
             // Update Tool and System info from UI
             if (this.uiState.zoningMode != this.zoningToolkitModToolSystem.workingState.zoningMode) {

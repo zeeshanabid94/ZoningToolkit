@@ -3,13 +3,13 @@ import { Button, FloatingButton, Tooltip } from "cs2/ui";
 import React from 'react';
 import iconStyles from "./icon.module.scss";
 import icon from "../../assets/Zoning Toolkit Icon.png";
-import { useModUIStore } from "./state";
+import { useModUIStore, withStore } from "./state";
 
 interface ButtonState {
 	isHovered: boolean
 }
 
-export class ButtonComponent extends React.Component<{}, ButtonState> {
+class ButtonComponentInternal extends React.Component<{}, ButtonState> {
 	constructor(props: {}) {
 		super(props);
 		// Initialize state
@@ -35,7 +35,9 @@ export class ButtonComponent extends React.Component<{}, ButtonState> {
 	}
 
 	render() {
-		const style: React.CSSProperties = {
+		const photomodeActive = useModUIStore.getState().photomodeActive
+
+		let style: React.CSSProperties = {
 			position: "absolute",
 			top: "1990%",
 			right: "0%",
@@ -48,6 +50,13 @@ export class ButtonComponent extends React.Component<{}, ButtonState> {
 		const hoverStyle: React.CSSProperties = {
 			...style,
 			border: '2px solid white',
+		}
+
+		if (photomodeActive) {
+			style = {
+				...style,
+				display: "none"
+			}
 		}
 
 		return <div style={this.state.isHovered ? hoverStyle : style}>
@@ -63,3 +72,5 @@ export class ButtonComponent extends React.Component<{}, ButtonState> {
 		</div>
 	}
 }
+
+export const ButtonComponent = withStore(ButtonComponentInternal)

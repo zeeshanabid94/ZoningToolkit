@@ -42,6 +42,7 @@ export class ZoningToolkitPanelInternal extends React.Component<ZoningToolkitPan
         const uiVisible = useModUIStore.getState().uiVisible;
         const zoningMode = getDirectionFromString(useModUIStore.getState().zoningMode);
         const isToolEnabled = useModUIStore.getState().isToolEnabled;
+        const photomodeActive = useModUIStore.getState().photomodeActive;
 
         // Define the styles
         const windowStyle: React.CSSProperties = {
@@ -58,7 +59,7 @@ export class ZoningToolkitPanelInternal extends React.Component<ZoningToolkitPan
             textAlign: 'center',
             transition: 'box-shadow 0.3s ease-in-out',
             pointerEvents: 'auto',
-            display: uiVisible === true ? 'block' : 'none'
+            display: uiVisible && !photomodeActive === true ? 'block' : 'none'
         };
 
         const buttonStyle = {
