@@ -12,7 +12,7 @@
 		Gives you the ability to place roads close together and don't have zones overlapping each other.
 
 		Usage for new roads:
-		- When you install the Mod, you will see a button on the right for the mod. It is a colorful icon.
+		- When you install the Mod, you will see a button on the top right for the mod. It is a colorful icon.
 		- Clicking the button will or close the Zoning UI.
 		- Zoning options apply to new roads. So when you want to draw a road with zoning on particular side or no side of it
 		you can choose that option. The zoning side depends on your the direction you build your road.
@@ -39,15 +39,14 @@
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.7" />
+	<ModVersion Value="0.7.1" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog Value="
-- UI does not show up in photomode now.
-- UI is completely controlled by the button on the right. UI does not auto open on road asset menu now.
+- UI button moved to the top right. Button now has relative positioning and can be moved around.
 			   " />
 	<!--ChangeLog>
 	</ChangeLog-->
