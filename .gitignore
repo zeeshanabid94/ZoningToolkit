@@ -3,3 +3,4 @@ obj/
 .vs/
 zoning-toolkit-ui/node_modules
 webpack
+Library/*
