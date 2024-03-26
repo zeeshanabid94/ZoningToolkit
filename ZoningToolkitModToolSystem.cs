@@ -30,10 +30,19 @@ namespace ZoningToolkit
     {
         public EntityCommandBuffer commandBuffer;
         public Entity entityToHighlight;
+        public ComponentLookup<Edge> edgeLookup;
         public void Execute()
         {
             this.commandBuffer.AddComponent<Highlighted>(this.entityToHighlight);
             this.commandBuffer.AddComponent<Updated>(this.entityToHighlight);
+
+            if (edgeLookup.HasComponent(this.entityToHighlight))
+            {
+                Edge edge = edgeLookup[this.entityToHighlight];
+
+                this.commandBuffer.AddComponent<Updated>(edge.m_Start);
+                this.commandBuffer.AddComponent<Updated>(edge.m_End);
+            }
         }
     }
 
@@ -41,10 +50,19 @@ namespace ZoningToolkit
     {
         public EntityCommandBuffer commandBuffer;
         public Entity entityToUnhighlight;
+        public ComponentLookup<Edge> edgeLookup;
         public void Execute()
         {
             this.commandBuffer.RemoveComponent<Highlighted>(this.entityToUnhighlight);
             this.commandBuffer.AddComponent<Updated>(this.entityToUnhighlight);
+
+            if (edgeLookup.HasComponent(this.entityToUnhighlight))
+            {
+                Edge edge = edgeLookup[this.entityToUnhighlight];
+
+                this.commandBuffer.AddComponent<Updated>(edge.m_Start);
+                this.commandBuffer.AddComponent<Updated>(edge.m_End);
+            }
         }
     }
 
@@ -145,6 +163,7 @@ namespace ZoningToolkit
         public ComponentLookup<Curve> curveComponentLookup;
         public ComponentLookup<ZoningInfo> zoningInfoComponentLookup;
         public BufferLookup<SubBlock> subBlockBufferLookup;
+        public ComponentLookup<Edge> edgeLookup;
         public EntityCommandBuffer entityCommandBuffer;
         public ZoningInfo newZoningInfo;
         public void Execute()
@@ -171,6 +190,14 @@ namespace ZoningToolkit
 
                 this.entityCommandBuffer.RemoveComponent<Highlighted>(entity);
                 this.entityCommandBuffer.AddComponent<Updated>(entity);
+
+                if (edgeLookup.HasComponent(entity))
+                {
+                    Edge edge = edgeLookup[entity];
+
+                    this.entityCommandBuffer.AddComponent<Updated>(edge.m_Start);
+                    this.entityCommandBuffer.AddComponent<Updated>(edge.m_End);
+                }
             }
 
             entities.Dispose();
@@ -255,6 +282,7 @@ namespace ZoningToolkit
                 entityCommandBuffer = this.onUpdateMemory.commandBufferSystem,
                 entityHashSet = this.workingState.lastRaycastEntities,
                 subBlockBufferLookup = this.typeHandle.__Game_SubBlock_RW_BufferLookup,
+                edgeLookup = this.typeHandle.__Game_Edge_RW_ComponentLookup,
                 newZoningInfo = new ZoningInfo()
                 {
                     zoningMode = this.workingState.zoningMode
@@ -292,7 +320,8 @@ namespace ZoningToolkit
                     JobHandle highlightJob = new HighlightEntitiesJob()
                     {
                         entityToHighlight = entity,
-                        commandBuffer = this.onUpdateMemory.commandBufferSystem
+                        commandBuffer = this.onUpdateMemory.commandBufferSystem,
+                        edgeLookup = this.typeHandle.__Game_Edge_RW_ComponentLookup
                     }.Schedule(onUpdateMemory.currentInputDeps);
                     this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(highlightJob, this.onUpdateMemory.currentInputDeps);
                 }
@@ -317,6 +346,7 @@ namespace ZoningToolkit
                         {
                             commandBuffer = this.onUpdateMemory.commandBufferSystem,
                             entityToUnhighlight = previousRaycastEntity,
+                            edgeLookup = this.typeHandle.__Game_Edge_RW_ComponentLookup
                         }.Schedule(onUpdateMemory.currentInputDeps);
                         this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(unhighlightJob, this.onUpdateMemory.currentInputDeps);
                     }
@@ -325,7 +355,8 @@ namespace ZoningToolkit
                     JobHandle highlightJob = new HighlightEntitiesJob()
                     {
                         entityToHighlight = this.workingState.lastRaycastEntity,
-                        commandBuffer = this.onUpdateMemory.commandBufferSystem
+                        commandBuffer = this.onUpdateMemory.commandBufferSystem,
+                        edgeLookup = this.typeHandle.__Game_Edge_RW_ComponentLookup
                     }.Schedule(onUpdateMemory.currentInputDeps);
                     this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(highlightJob, this.onUpdateMemory.currentInputDeps);
 
@@ -351,6 +382,7 @@ namespace ZoningToolkit
                     {
                         commandBuffer = this.onUpdateMemory.commandBufferSystem,
                         entityToUnhighlight = previousRaycastEntity,
+                        edgeLookup = this.typeHandle.__Game_Edge_RW_ComponentLookup
                     }.Schedule(onUpdateMemory.currentInputDeps);
                     this.onUpdateMemory.currentInputDeps = JobHandle.CombineDependencies(unhighlightJob, this.onUpdateMemory.currentInputDeps);
                 }
@@ -464,6 +496,8 @@ namespace ZoningToolkit
 
             public ComponentLookup<Block> __Game_Block_RW_ComponentLookup;
 
+            public ComponentLookup<Edge> __Game_Edge_RW_ComponentLookup;
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void __AssignHandles(ref SystemState state)
             {
@@ -471,6 +505,7 @@ namespace ZoningToolkit
                 __Game_Zoning_Info_RW_ComponentLookup = state.GetComponentLookup<ZoningInfo>(isReadOnly: false);
                 __Game_SubBlock_RW_BufferLookup = state.GetBufferLookup<SubBlock>(isReadOnly: false);
                 __Game_Block_RW_ComponentLookup = state.GetComponentLookup<Block>(isReadOnly: false);
+                __Game_Edge_RW_ComponentLookup = state.GetComponentLookup<Edge>(isReadOnly: false);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -480,6 +515,7 @@ namespace ZoningToolkit
                 __Game_Zoning_Info_RW_ComponentLookup.Update(ref state);
                 __Game_SubBlock_RW_BufferLookup.Update(ref state);
                 __Game_Block_RW_ComponentLookup.Update(ref state);
+                __Game_Edge_RW_ComponentLookup.Update(ref state);
             }
         }
     }
