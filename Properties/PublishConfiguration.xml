@@ -9,25 +9,25 @@
 	<!--LongDescription Value="This tool lets you control the zoning on the roads for your cities." /-->
 	<LongDescription>
 		This tool lets you control the zoning on the roads for your cities. You can enable zones on both sides of roads, on any one side or no side at all.
-		Gives you the ability to place roads close together and don't have zones overlapping each other.
+		Gives you the ability to place roads close together and don't have zones overlapping each other.    
 
-		Usage for new roads:
-		- When you install the Mod, you will see a button on the top right for the mod. It is a colorful icon.
-		- Clicking the button will or close the Zoning UI.
-		- Zoning options apply to new roads. So when you want to draw a road with zoning on particular side or no side of it
-		you can choose that option. The zoning side depends on your the direction you build your road.
+		Usage for new roads:    
+		- When you install the Mod, you will see a button on the top right for the mod. It is a colorful icon.    
+		- Clicking the button will or close the Zoning UI.    
+		- Zoning options apply to new roads. So when you want to draw a road with zoning on particular side or no side of it    
+		you can choose that option. The zoning side depends on your the direction you build your road.    
 		
-		Usage for existing roads:
-		- To update the zoning of existing roads, you can click on the Zoning Tool button to start the Zoning Tool. 
-		- Once started, the Zoning Tool button will turn green. This indicates that the tool is running. To stop the tool running, click on the Zoning Tool button again.
-		- You can select the zoning option to update to. For example, you can select left if you want to update the zones to be only left side of the road.
-		Again, here the direction of the road when it was built matters.
-		- To edit the zoning of existing roads left click on a road to update. You can click and drag to select multiple roads.
+		Usage for existing roads:     
+		- To update the zoning of existing roads, you can click on the Zoning Tool button to start the Zoning Tool.     
+		- Once started, the Zoning Tool button will turn green. This indicates that the tool is running. To stop the tool running, click on the Zoning Tool button again.   
+		- You can select the zoning option to update to. For example, you can select left if you want to update the zones to be only left side of the road.   
+		Again, here the direction of the road when it was built matters.   
+		- To edit the zoning of existing roads left click on a road to update. You can click and drag to select multiple roads.    
 		
 		Please note that if you have buildings on the road, the zoning will not be toggled. This is to prevent the buildings from being despawned
-		when the zoning is removed.
+		when the zoning is removed.    
 
-		Credits:
+		Credits:    
 		- Special thanks to Chamëleon TBN, Algernon, PDXPeanut, Quboid
 	</LongDescription>
 	<!--Thumbnail-->
@@ -37,16 +37,16 @@
 	<!--Tag, can be set multiple times-->
 	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="" />
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/zoning-toolkit.1644669/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.8.0" />
+	<ModVersion Value="0.7.2" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog Value="
-- UI button moved to the top right. Button now has relative positioning and can be moved around.
+- Fixed lane arrows disappearing with Zoning tool
 			   " />
 	<!--ChangeLog>
 	</ChangeLog-->
