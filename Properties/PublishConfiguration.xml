@@ -39,14 +39,14 @@
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/zoning-toolkit.1644669/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.7.2" />
+	<ModVersion Value="0.7.3" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog Value="
-- Fixed lane arrows disappearing with Zoning tool
+- Removed sample mod settings menu from options
 			   " />
 	<!--ChangeLog>
 	</ChangeLog-->
