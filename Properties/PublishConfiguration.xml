@@ -36,7 +36,7 @@ Credits:
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/ZoningToolkit.png" />
 	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="" />
+	<Screenshot Value="Properties/Screenshot_PanelAndZoning.png" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="Code Mod" />
 	<!--Link to the forum post where the mod can be discussed-->
