@@ -1,7 +1,6 @@
 ﻿import engine, { EventHandle } from "cohtml/cohtml";
 import React from "react";
 import { create } from "zustand";
-import { ZoningMode } from "./zoning-toolkit-panel";
 
 export interface ModUIState {
     uiVisible: boolean,

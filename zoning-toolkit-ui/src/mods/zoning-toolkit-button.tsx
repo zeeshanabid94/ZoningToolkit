@@ -5,14 +5,11 @@ import menuIcon from "../../assets/icons/menu_icon.svg";
 import menuButtonStyles from "./zoning-toolkit-button.module.scss";
 import { useModUIStore, withStore } from "./state";
 import VanillaBindings from "./vanilla-bindings";
+import { getModeFromString, zoneModeIconMap } from "./utils";
 
 const { DescriptionTooltip } = VanillaBindings.components;
 
 class ZoningToolkitMenuButtonInternal extends React.Component {
-	constructor(props: {}) {
-		super(props);
-	}
-
 	handleMenuButtonClick = () => {
 		console.log("ZT Mouse clicked toolkit menu button");
 		useModUIStore.getState().updateUiVisible(!useModUIStore.getState().uiVisible)
@@ -20,6 +17,11 @@ class ZoningToolkitMenuButtonInternal extends React.Component {
 
 	render() {
 		const photomodeActive = useModUIStore.getState().photomodeActive
+
+		// DEBUG: Can change to show zone indicator in tool menu icon (a little cramped though...)
+		const showZoneIndicatorInIcon = false;
+		const currentZoningMode = getModeFromString(useModUIStore.getState().zoningMode);
+		const currentZoningModeIcon = currentZoningMode ? zoneModeIconMap[currentZoningMode] : undefined;
 
 		const buttonStyle: CSSProperties = {
 			// Menu button should be hidden in photo mode
@@ -33,11 +35,15 @@ class ZoningToolkitMenuButtonInternal extends React.Component {
 				title="Zoning Toolkit"
 			>
 				<Button
+					className={menuButtonStyles.menuButton}
 					style={buttonStyle}
 					variant="floating"
 					onClick={this.handleMenuButtonClick}
 				>
 					<img src={menuIcon} className={menuButtonStyles.menuIcon} />
+					{(currentZoningModeIcon && showZoneIndicatorInIcon) && (
+						<img src={currentZoningModeIcon} className={menuButtonStyles.menuModeIcon} />
+					)}
 				</Button>
 			</DescriptionTooltip>
 		);
