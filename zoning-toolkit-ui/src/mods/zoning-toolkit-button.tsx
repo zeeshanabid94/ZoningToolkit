@@ -1,78 +1,47 @@
-﻿import { ModuleRegistryExtend } from "cs2/modding";
-import { Button, FloatingButton, Tooltip } from "cs2/ui";
-import React from 'react';
-import iconStyles from "./icon.module.scss";
-import icon from "../../assets/Zoning Toolkit Icon.png";
+﻿import { Button } from "cs2/ui";
+import React, { CSSProperties } from 'react';
+
+import menuIcon from "../../assets/icons/menu_icon.svg";
+import menuButtonStyles from "./zoning-toolkit-button.module.scss";
 import { useModUIStore, withStore } from "./state";
-import Draggable from "react-draggable";
+import VanillaBindings from "./vanilla-bindings";
 
-interface ButtonState {
-	isHovered: boolean
-}
+const { DescriptionTooltip } = VanillaBindings.components;
 
-class ButtonComponentInternal extends React.Component<{}, ButtonState> {
+class ZoningToolkitMenuButtonInternal extends React.Component {
 	constructor(props: {}) {
 		super(props);
-		// Initialize state
-		this.state = { isHovered: false };
 	}
 
-	// Method to handle mouse enter
-	handleMouseEnter = () => {
-		console.log("Mouse on button.")
-		this.setState({ isHovered: true });
-	};
-
-	// Method to handle mouse leave
-	handleMouseLeave = () => {
-		console.log("Mouse off button.")
-		this.setState({ isHovered: false });
-	};
-
-	// Method to handle click
-	handleMouseClick = () => {
-		console.log("Mouse clicked button.");
+	handleMenuButtonClick = () => {
+		console.log("ZT Mouse clicked toolkit menu button");
 		useModUIStore.getState().updateUiVisible(!useModUIStore.getState().uiVisible)
 	}
 
 	render() {
 		const photomodeActive = useModUIStore.getState().photomodeActive
 
-		let style: React.CSSProperties = {
-			position: "relative",
-			zIndex: 100,
-			pointerEvents: "auto",
-			borderRadius: "50%",
-			border: "2px solid black"
+		const buttonStyle: CSSProperties = {
+			// Menu button should be hidden in photo mode
+			display: photomodeActive ? "none" : undefined,
 		};
 
-		const hoverStyle: React.CSSProperties = {
-			...style,
-			border: '2px solid white',
-		}
-
-		if (photomodeActive) {
-			style = {
-				...style,
-				display: "none"
-			}
-		}
-
-		return <Draggable grid={[1, 1]}>
-			<div style={this.state.isHovered ? hoverStyle : style}>
+		return (
+			<DescriptionTooltip
+				description="Control/modify zoning along roads. Allows zoning on both sides of roads, on any one side, or no sides at all."
+				direction="right"
+				title="Zoning Toolkit"
+			>
 				<Button
-					variant={"round"}
-					onMouseEnter={this.handleMouseEnter}
-					onMouseLeave={this.handleMouseLeave}
-					onClick={this.handleMouseClick}
+					style={buttonStyle}
+					variant="floating"
+					onClick={this.handleMenuButtonClick}
 				>
-					<img src={icon} className={iconStyles.icon} />
+					<img src={menuIcon} className={menuButtonStyles.menuIcon} />
 				</Button>
-				{/*<div className={iconStyles.cssIcon}/>*/}
-			</div>
-		</Draggable>
-		
+			</DescriptionTooltip>
+		);
 	}
 }
 
-export const ButtonComponent = withStore(ButtonComponentInternal)
+export const ZoningToolkitMenuButton = withStore(ZoningToolkitMenuButtonInternal)

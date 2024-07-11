@@ -5,7 +5,7 @@ This enables finer control of where buildings will spawn, as well as placing roa
 
 ## Potential Improvements
 - Zoning tool remains active when you switch to a prefab that doesn't support zoning (ie. roundabouts, advanced road services), but should be turned off when switching prefabs.
-- Zoning tool UI shows up in photo mode, but should not.
+- Zoning tool opens road panel when selected, but does not close when unselected
 
 ### Credits
 Special thanks to Chamëleon TBN, Algernon, PDXPeanut, Quboid
