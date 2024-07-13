@@ -397,8 +397,6 @@ namespace ZoningToolkit
             base.OnStartRunning();
             this.applyAction.shouldBeEnabled = true;
             this.cancelAction.shouldBeEnabled = true;
-            this.applyAction.ClearDisplayProperties();
-            this.cancelAction.ClearDisplayProperties();
             this.onUpdateMemory = default;
             this.workingState.lastRaycastEntity = Entity.Null;
             this.workingState.lastRaycastEntities = new NativeHashSet<Entity>(32, Allocator.Persistent);
