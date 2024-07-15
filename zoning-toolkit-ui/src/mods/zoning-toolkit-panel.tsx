@@ -6,7 +6,7 @@ import updateToolIcon from "../../assets/icons/replace_tool_icon.svg";
 import { useModUIStore, withStore } from './state';
 import panelStyles from "./zoning-toolkit-panel.module.scss";
 import VanillaBindings from './vanilla-bindings';
-import { getModeFromString, zoneModeIconMap, ZoningMode } from './utils';
+import { getModeFromString, zoneModeIconMap, ZoningMode } from './zoning-toolkit-utils';
 
 interface ZoningModeButtonConfig {
     icon: string;

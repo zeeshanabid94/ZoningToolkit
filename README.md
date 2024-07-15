@@ -8,4 +8,4 @@ This enables finer control of where buildings will spawn, as well as placing roa
 - Zoning tool opens road panel when selected, but does not close when unselected
 
 ### Credits
-Special thanks to Chamëleon TBN, Algernon, PDXPeanut, Quboid
+Special thanks to Chamëleon TBN, Algernon, PDXPeanut, Quboid, PoliteCanadian

@@ -28,10 +28,10 @@ The tool can be used both for placing new roads and updating existing roads.
 ## Notes
 
 Please note that if you have buildings on a road, the zoning will not be toggled when updating zoning!
-This is to prevent the buildings from being despawned when the zoning is removed.    
+This is to prevent the buildings from being despawned when the zoning is removed.
 
-Credits:    
-* Special thanks to Chamëleon TBN, Algernon, PDXPeanut, Quboid
+Credits:
+* Special thanks to Chamëleon TBN, Algernon, PDXPeanut, Quboid, PoliteCanadian
 	</LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/ZoningToolkit.png" />
