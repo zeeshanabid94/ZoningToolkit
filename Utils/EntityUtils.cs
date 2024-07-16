@@ -8,7 +8,7 @@ using Unity.Collections;
 using Unity.Entities;
 using ZoningToolkit.Systems;
 
-namespace ZoningToolkit.Utilities
+namespace ZoningToolkit.Utils
 {
     public static class EntityUtils
     {

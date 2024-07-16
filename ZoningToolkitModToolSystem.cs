@@ -20,8 +20,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine.Scripting;
 using ZoningToolkit.Components;
-using ZoningToolkit.utils;
-using ZoningToolkit.Utilties;
+using ZoningToolkit.Utils;
 using static Colossal.IO.AssetDatabase.AtlasFrame;
 
 namespace ZoningToolkit
@@ -252,8 +251,8 @@ namespace ZoningToolkit
             this.getLogger().Info($"Creating {toolID}.");
             base.OnCreate();
 
-            this.applyAction = InputManager.instance.FindAction("Tool", "Apply");
-            this.cancelAction = InputManager.instance.FindAction("Tool", "Cancel");
+            this.applyAction = InputManager.instance.FindAction(InputManager.kToolMap, "Apply");
+            this.cancelAction = InputManager.instance.FindAction(InputManager.kToolMap, "Mouse Cancel");
             this.applyActionNameOverride = new DisplayNameOverride(nameof(ZoningToolkitModToolSystem), this.applyAction, "Updated Zoning Side", 20);
 
             this.toolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
@@ -271,6 +270,10 @@ namespace ZoningToolkit
 
                 }
             );
+
+            // Enable Mod actions.
+            this.applyAction.shouldBeEnabled = true;
+            this.cancelAction.shouldBeEnabled = true;
 
             this.getLogger().Info($"Done Creating {toolID}.");
         }

@@ -16,8 +16,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Scripting;
 using ZoningToolkit.Components;
-using ZoningToolkit.utils;
-using ZoningToolkit.Utilties;
+using ZoningToolkit.Utils;
 
 namespace ZoningToolkit.Systems
 {

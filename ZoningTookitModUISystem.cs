@@ -9,7 +9,7 @@ using Game.UI;
 using Unity.Collections;
 using Unity.Entities;
 using ZoningToolkit.Components;
-using ZoningToolkit.Utilties;
+using ZoningToolkit.Utils;
 
 namespace ZoningToolkit.Systems
 {

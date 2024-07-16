@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Unity.Jobs;
-using ZoningToolkit.Utilties;
+using ZoningToolkit.Utils;
 
 namespace ZoningToolkit
 {

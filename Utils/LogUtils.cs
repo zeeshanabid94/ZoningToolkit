@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using Colossal.Logging;
 
-namespace ZoningToolkit.Utilities
+namespace ZoningToolkit.Utils
 {
     public static class LogUtils
     {
