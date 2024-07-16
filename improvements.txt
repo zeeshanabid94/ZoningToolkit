@@ -1,4 +1,0 @@
-#### Improvements to consider
-- Zoning tool remains active when you switch to a prefab that doesn't support zoning, like roundabounts and advanced road services.
-Make sure it turns off when you switch prefabs.
-- Zoning toolkit UI shows up in photomode. It should not

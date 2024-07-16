@@ -1,0 +1,12 @@
+.panel {
+    // Must remove panel from local positioning (to avoid affecting other mod buttons)
+    position: absolute;
+    top: 50rem;
+}
+
+.panelToolModeRow {
+    display: flex;
+    flex-direction: row;
+    // Ensure some minimum spacing between left/right columns
+    padding-left: 16rem;
+}

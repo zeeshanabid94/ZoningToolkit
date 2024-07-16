@@ -13,8 +13,7 @@
     "typeRoots": ["./types"],
     "resolveJsonModule": true,
     "paths": {
-      "mod.json": [ "../mod.json" ]
-    },
-    "lib": ["DOM", "ESNext"]
+      "mod.json": ["../mod.json"]
+    }
   },
 } 
