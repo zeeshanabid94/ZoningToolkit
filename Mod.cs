@@ -22,11 +22,12 @@ namespace ZoningToolkit
             if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
                 log.Info($"Current mod asset at {asset.path}");
 
-            m_Setting = new Setting(this);
+            // The mod has no settings right now.
+/*            m_Setting = new Setting(this);
             m_Setting.RegisterInOptionsUI();
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(m_Setting));
 
-            AssetDatabase.global.LoadSettings(nameof(ZoningToolkit), m_Setting, new Setting(this));
+            AssetDatabase.global.LoadSettings(nameof(ZoningToolkit), m_Setting, new Setting(this));*/
 
             m_System = new ZoningToolkitModSystem();
             m_UISystem = new ZoningToolkitModUISystem();
