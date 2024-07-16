@@ -8,7 +8,7 @@ using UnityEngine;
 using ZoningToolkit.Components;
 using ZoningToolkit.Utilties;
 
-namespace ZoningToolkit.utils
+namespace ZoningToolkit.Utilities
 {
     internal class BlockUtils
     {
