@@ -6,9 +6,9 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using ZoningToolkit.Components;
-using ZoningToolkit.Utilties;
+using ZoningToolkit.Utils;
 
-namespace ZoningToolkit.utils
+namespace ZoningToolkit.Utils
 {
     internal class BlockUtils
     {

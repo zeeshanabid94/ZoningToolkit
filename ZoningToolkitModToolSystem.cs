@@ -20,8 +20,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine.Scripting;
 using ZoningToolkit.Components;
-using ZoningToolkit.utils;
-using ZoningToolkit.Utilties;
+using ZoningToolkit.Utils;
 using static Colossal.IO.AssetDatabase.AtlasFrame;
 
 namespace ZoningToolkit
@@ -227,6 +226,7 @@ namespace ZoningToolkit
         // Fields related to the Tool System itself.
         private ProxyAction applyAction;
         private ProxyAction cancelAction;
+        private DisplayNameOverride applyActionNameOverride;
         private ToolOutputBarrier toolOutputBarrier;
         private NetToolSystem netToolSystem;
         private ToolSystem toolSystem;
@@ -251,8 +251,9 @@ namespace ZoningToolkit
             this.getLogger().Info($"Creating {toolID}.");
             base.OnCreate();
 
-            this.applyAction = InputManager.instance.FindAction("Tool", "Default Tool");
-            this.cancelAction = InputManager.instance.FindAction("Tool", "Mouse Cancel");
+            this.applyAction = InputManager.instance.FindAction(InputManager.kToolMap, "Apply");
+            this.cancelAction = InputManager.instance.FindAction(InputManager.kToolMap, "Mouse Cancel");
+            this.applyActionNameOverride = new DisplayNameOverride(nameof(ZoningToolkitModToolSystem), this.applyAction, "Updated Zoning Side", 20);
 
             this.toolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
             this.netToolSystem = World.GetOrCreateSystemManaged<NetToolSystem>();
@@ -269,6 +270,10 @@ namespace ZoningToolkit
 
                 }
             );
+
+            // Enable Mod actions.
+            this.applyAction.shouldBeEnabled = true;
+            this.cancelAction.shouldBeEnabled = true;
 
             this.getLogger().Info($"Done Creating {toolID}.");
         }
@@ -331,11 +336,11 @@ namespace ZoningToolkit
         }
         private JobHandle entityHighlighted(ZoningToolkitModToolSystemState previousState, ZoningToolkitModToolSystemState nextState)
         {
-            this.getLogger().Info("Trying to Highlight Entity.");
+            this.getLogger().Debug("Trying to Highlight Entity.");
             Entity previousRaycastEntity = this.workingState.lastRaycastEntity;
             if (this.GetRaycastResult(out Entity entity, out RaycastHit raycastHit))
             {
-                this.getLogger().Info($"Raycast hit entity {entity} at {raycastHit}");
+                this.getLogger().Debug($"Raycast hit entity {entity} at {raycastHit}");
                 if (this.workingState.lastRaycastEntity != entity)
                 {
                     this.getLogger().Info("Highlighting entity.");
@@ -395,13 +400,13 @@ namespace ZoningToolkit
         {
             this.getLogger().Info($"Started running tool {toolID}");
             base.OnStartRunning();
+            this.toolEnabled = true;
             this.applyAction.shouldBeEnabled = true;
             this.cancelAction.shouldBeEnabled = true;
-            this.applyAction.ClearDisplayProperties();
-            this.cancelAction.ClearDisplayProperties();
             this.onUpdateMemory = default;
             this.workingState.lastRaycastEntity = Entity.Null;
             this.workingState.lastRaycastEntities = new NativeHashSet<Entity>(32, Allocator.Persistent);
+            this.applyActionNameOverride.state = DisplayNameOverride.State.GlobalHint;
             this.toolStateMachine.reset();
         }
 
@@ -411,6 +416,7 @@ namespace ZoningToolkit
             base.OnStopRunning();
             this.applyAction.shouldBeEnabled = false;
             this.cancelAction.shouldBeEnabled = false;
+            this.applyActionNameOverride.state = DisplayNameOverride.State.Off;
             this.workingState.lastRaycastEntities.Dispose();
         }
 
@@ -430,6 +436,8 @@ namespace ZoningToolkit
 
             base.requireZones = true;
             base.requireAreas |= AreaTypeMask.Lots;
+            this.getLogger().Info($"Apply Action enabled: {this.applyAction.enabled}");
+            this.getLogger().Info($"Apply Action: {this.applyAction.WasPressedThisFrame()}");
             if (this.GetPrefab() != null)
             {
                 this.UpdateInfoview(this.m_ToolSystem.actionMode.IsEditor() ? Entity.Null : this.m_PrefabSystem.GetEntity(this.GetPrefab()));

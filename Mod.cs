@@ -14,10 +14,14 @@ namespace ZoningToolkit
         private ZoningToolkitModSystem m_System;
         private ZoningToolkitModUISystem m_UISystem;
         private ZoningToolkitModToolSystem m_toolSystem;
+        
+        public static Mod Instance { get; private set;  }
 
         public void OnLoad(UpdateSystem updateSystem)
         {
             log.Info(nameof(OnLoad));
+
+            Instance = this;
 
             if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
                 log.Info($"Current mod asset at {asset.path}");

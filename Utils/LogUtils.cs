@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using Colossal.Logging;
 
-namespace ZoningToolkit.Utilties
+namespace ZoningToolkit.Utils
 {
     public static class LogUtils
     {
@@ -16,7 +16,7 @@ namespace ZoningToolkit.Utilties
 
                 // Always make effectiveness to error when publishing
                 // Don't want logs to continuously dumped on user machine
-                logger.SetEffectiveness(Level.Error);
+                logger.SetEffectiveness(Level.Info);
                 return logger;
             }
             else
@@ -31,7 +31,7 @@ namespace ZoningToolkit.Utilties
             ILog logger = LogManager.GetLogger($"{nameof(ZoningToolkit)}").SetShowsErrorsInUI(true);
             // Always make effectiveness to error when publishing
             // Don't want logs to continuously dumped on user machine
-            logger.SetEffectiveness(Level.Error);
+            logger.SetEffectiveness(Level.Info);
             return logger;
         }
     }

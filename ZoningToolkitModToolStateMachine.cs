@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Unity.Jobs;
-using ZoningToolkit.Utilties;
+using ZoningToolkit.Utils;
 
 namespace ZoningToolkit
 {
@@ -31,7 +31,7 @@ namespace ZoningToolkit
         {
             if (this.transitions.TryGetValue((previousState, nextState), out StateCallback transitionCallback))
             {
-                this.getLogger().Info($"Callback for transition from ${previousState} to {nextState}");
+                this.getLogger().Debug($"Callback for transition from ${previousState} to {nextState}");
                 transitionCallback(previousState, nextState);
             }
         }
