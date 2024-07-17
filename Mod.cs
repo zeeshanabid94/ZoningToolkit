@@ -10,18 +10,28 @@ namespace ZoningToolkit
     public class Mod : IMod
     {
         public static ILog log = LogManager.GetLogger($"{nameof(ZoningToolkit)}.{nameof(Mod)}").SetShowsErrorsInUI(false);
+        public const string ModName = "ZoningToolkit";
         private Setting m_Setting;
         private ZoningToolkitModSystem m_System;
         private ZoningToolkitModUISystem m_UISystem;
         private ZoningToolkitModToolSystem m_toolSystem;
         
         public static Mod Instance { get; private set;  }
+        
+        /// <summary>
+        /// Gets the mod's active settings configuration.
+        /// </summary>
+        internal ModSettings ActiveSettings { get; private set; } 
 
         public void OnLoad(UpdateSystem updateSystem)
         {
             log.Info(nameof(OnLoad));
 
             Instance = this;
+
+            ActiveSettings = new ModSettings(this);
+
+            ActiveSettings.RegisterKeyBindings();
 
             if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
                 log.Info($"Current mod asset at {asset.path}");
