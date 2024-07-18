@@ -279,7 +279,7 @@ namespace ZoningToolkit
                 this.getLogger().Info($"Got tool {tool.toolID} ({tool.GetType().FullName})");
                 if (tool == this)
                 {
-                    this.getLogger().Debug("Found Line Tool reference in tool list");
+                    this.getLogger().Debug("Found  ZoningToolkit Tool reference in tool list");
                     thisSystem = tool;
                     continue;
                 }
