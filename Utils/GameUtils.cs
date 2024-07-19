@@ -17,6 +17,7 @@ namespace ZoningToolkit.Utils
         /// <returns>New <see cref="ProxyBinding" /> bound to the default game action.</returns>
         public static ProxyAction CopyGameAction(string gameActionName, string modActionName)
         {
+            LogUtils.getLogger().Debug($"Copying Game Action {gameActionName} to Mod Action {modActionName}");
             // Get action references.
             ProxyAction modAction = Mod.Instance.ActiveSettings.GetAction(modActionName);
             ProxyAction gameAction = InputManager.instance.FindAction(InputManager.kToolMap, gameActionName);
