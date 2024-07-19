@@ -1,0 +1,51 @@
+﻿using Game.Input;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ZoningToolkit.Utils
+{
+    internal class GameUtils
+    {
+        /// <summary>
+        /// Copies a game action binding to a mod-usable <see cref="ProxyBinding" />.
+        /// </summary>
+        /// <param name="gameActionName">Game action name to copy from.</param>
+        /// <param name="modActionName">Mod action name to copy to.</param>
+        /// <returns>New <see cref="ProxyBinding" /> bound to the default game action.</returns>
+        public static ProxyAction CopyGameAction(string gameActionName, string modActionName)
+        {
+            // Get action references.
+            ProxyAction modAction = Mod.Instance.ActiveSettings.GetAction(modActionName);
+            ProxyAction gameAction = InputManager.instance.FindAction(InputManager.kToolMap, gameActionName);
+
+            // Enable mod action.
+            modAction.shouldBeEnabled = true;
+
+            // Find action bindings.
+            ProxyBinding modBinding = modAction.bindings.FirstOrDefault(b => b.group == nameof(UnityEngine.InputSystem.Mouse));
+            ProxyBinding gameBinding = gameAction.bindings.FirstOrDefault(b => b.group == nameof(UnityEngine.InputSystem.Mouse));
+
+            // Setup change watcher and apply current settings.
+            ProxyBinding.Watcher applyWatcher = new ProxyBinding.Watcher(gameBinding, binding => BindToGameAction(modBinding, binding));
+            BindToGameAction(modBinding, applyWatcher.binding);
+
+            return modAction;
+        }
+
+        /// <summary>
+        /// Binds a ProxyBinding to a game action.
+        /// </summary>
+        /// <param name="mimicBinding">ProxyBinding to bind.</param>
+        /// <param name="gameAction">Game action to bind to.</param>
+        private static void BindToGameAction(ProxyBinding mimicBinding, ProxyBinding gameAction)
+        {
+            ProxyBinding newBinding = mimicBinding.Copy();
+            newBinding.path = gameAction.path;
+            newBinding.modifiers = gameAction.modifiers;
+            InputManager.instance.SetBinding(newBinding, out _);
+        }
+    }
+}

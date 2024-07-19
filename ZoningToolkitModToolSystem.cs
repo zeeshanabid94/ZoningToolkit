@@ -251,7 +251,7 @@ namespace ZoningToolkit
             this.getLogger().Info($"Creating {toolID}.");
             base.OnCreate();
 
-            this.applyAction = InputManager.instance.FindAction(InputManager.kToolMap, "Apply");
+            this.applyAction = GameUtils.CopyGameAction("Apply", ModSettings.ApplyActionName); 
             this.cancelAction = InputManager.instance.FindAction(InputManager.kToolMap, "Mouse Cancel");
             this.applyActionNameOverride = new DisplayNameOverride(nameof(ZoningToolkitModToolSystem), this.applyAction, "Updated Zoning Side", 20);
 
@@ -270,6 +270,28 @@ namespace ZoningToolkit
 
                 }
             );
+
+            // Try to find existing reference from tool system tool list.
+            List<ToolBaseSystem> toolList = World.GetOrCreateSystemManaged<ToolSystem>().tools;
+            ToolBaseSystem thisSystem = null;
+            foreach (ToolBaseSystem tool in toolList)
+            {
+                this.getLogger().Info($"Got tool {tool.toolID} ({tool.GetType().FullName})");
+                if (tool == this)
+                {
+                    this.getLogger().Debug("Found  ZoningToolkit Tool reference in tool list");
+                    thisSystem = tool;
+                    continue;
+                }
+            }
+
+            // Remove existing tool reference.
+            if (thisSystem != null)
+            {
+                toolList.Remove(this);
+            }
+
+            toolList.Add(this);
 
             // Enable Mod actions.
             this.applyAction.shouldBeEnabled = true;
@@ -416,6 +438,7 @@ namespace ZoningToolkit
             base.OnStopRunning();
             this.applyAction.shouldBeEnabled = false;
             this.cancelAction.shouldBeEnabled = false;
+            this.toolEnabled = false;
             this.applyActionNameOverride.state = DisplayNameOverride.State.Off;
             this.workingState.lastRaycastEntities.Dispose();
         }
