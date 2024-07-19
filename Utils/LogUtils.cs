@@ -16,7 +16,7 @@ namespace ZoningToolkit.Utils
 
                 // Always make effectiveness to error when publishing
                 // Don't want logs to continuously dumped on user machine
-                logger.SetEffectiveness(Level.Info);
+                logger.SetEffectiveness(Level.Debug);
                 return logger;
             }
             else
@@ -31,7 +31,7 @@ namespace ZoningToolkit.Utils
             ILog logger = LogManager.GetLogger($"{nameof(ZoningToolkit)}").SetShowsErrorsInUI(true);
             // Always make effectiveness to error when publishing
             // Don't want logs to continuously dumped on user machine
-            logger.SetEffectiveness(Level.Info);
+            logger.SetEffectiveness(Level.Debug);
             return logger;
         }
     }

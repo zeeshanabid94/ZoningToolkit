@@ -11,7 +11,7 @@ namespace ZoningToolkit
     {
         public static ILog log = LogManager.GetLogger($"{nameof(ZoningToolkit)}.{nameof(Mod)}").SetShowsErrorsInUI(false);
         public const string ModName = "ZoningToolkit";
-        private Setting m_Setting;
+        private ModSetting m_Setting;
         private ZoningToolkitModSystem m_System;
         private ZoningToolkitModUISystem m_UISystem;
         private ZoningToolkitModToolSystem m_toolSystem;
@@ -32,6 +32,8 @@ namespace ZoningToolkit
             ActiveSettings = new ModSettings(this);
 
             ActiveSettings.RegisterKeyBindings();
+
+            this.m_Setting = ActiveSettings;
 
             if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
                 log.Info($"Current mod asset at {asset.path}");

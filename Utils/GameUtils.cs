@@ -21,12 +21,24 @@ namespace ZoningToolkit.Utils
             ProxyAction modAction = Mod.Instance.ActiveSettings.GetAction(modActionName);
             ProxyAction gameAction = InputManager.instance.FindAction(InputManager.kToolMap, gameActionName);
 
+            if (modAction == null)
+            {
+                LogUtils.getLogger().Debug("Mod binding is null. Therefore, no watcher on binding will be set.");
+                return null;
+            }
+
             // Enable mod action.
             modAction.shouldBeEnabled = true;
 
             // Find action bindings.
             ProxyBinding modBinding = modAction.bindings.FirstOrDefault(b => b.group == nameof(UnityEngine.InputSystem.Mouse));
             ProxyBinding gameBinding = gameAction.bindings.FirstOrDefault(b => b.group == nameof(UnityEngine.InputSystem.Mouse));
+
+            if (gameBinding == null)
+            {
+                LogUtils.getLogger().Debug("Game Binding is null. Therefore, no watcher on binding will be set.");
+                return null;
+            }
 
             // Setup change watcher and apply current settings.
             ProxyBinding.Watcher applyWatcher = new ProxyBinding.Watcher(gameBinding, binding => BindToGameAction(modBinding, binding));

@@ -252,7 +252,7 @@ namespace ZoningToolkit
             base.OnCreate();
 
             this.applyAction = GameUtils.CopyGameAction("Apply", ModSettings.ApplyActionName); 
-            this.cancelAction = InputManager.instance.FindAction(InputManager.kToolMap, "Mouse Cancel");
+            this.cancelAction = GameUtils.CopyGameAction("Cancel", ModSettings.CancelActionName);
             this.applyActionNameOverride = new DisplayNameOverride(nameof(ZoningToolkitModToolSystem), this.applyAction, "Updated Zoning Side", 20);
 
             this.toolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
@@ -272,7 +272,7 @@ namespace ZoningToolkit
             );
 
             // Try to find existing reference from tool system tool list.
-            List<ToolBaseSystem> toolList = World.GetOrCreateSystemManaged<ToolSystem>().tools;
+            List<ToolBaseSystem> toolList = this.toolSystem.tools;
             ToolBaseSystem thisSystem = null;
             foreach (ToolBaseSystem tool in toolList)
             {
@@ -292,10 +292,6 @@ namespace ZoningToolkit
             }
 
             toolList.Add(this);
-
-            // Enable Mod actions.
-            this.applyAction.shouldBeEnabled = true;
-            this.cancelAction.shouldBeEnabled = true;
 
             this.getLogger().Info($"Done Creating {toolID}.");
         }
@@ -367,6 +363,7 @@ namespace ZoningToolkit
                 {
                     this.getLogger().Info("Highlighting entity.");
 
+
                     if (previousRaycastEntity != Entity.Null)
                     {
                         JobHandle unhighlightJob = new UnHighlightEntitiesJob()
@@ -423,6 +420,7 @@ namespace ZoningToolkit
             this.getLogger().Info($"Started running tool {toolID}");
             base.OnStartRunning();
             this.toolEnabled = true;
+
             this.applyAction.shouldBeEnabled = true;
             this.cancelAction.shouldBeEnabled = true;
             this.onUpdateMemory = default;
@@ -457,6 +455,8 @@ namespace ZoningToolkit
             if (this.m_FocusChanged)
                 return inputDeps;
 
+            this.applyMode = ApplyMode.Clear;
+
             base.requireZones = true;
             base.requireAreas |= AreaTypeMask.Lots;
             this.getLogger().Info($"Apply Action enabled: {this.applyAction.enabled}");
@@ -472,7 +472,7 @@ namespace ZoningToolkit
                 commandBufferSystem = this.toolOutputBarrier.CreateCommandBuffer()
             };
 
-            this.toolStateMachine.transition(applyAction, cancelAction);
+            this.applyMode = this.toolStateMachine.transition(applyAction, cancelAction);
 
             this.toolOutputBarrier.AddJobHandleForProducer(this.onUpdateMemory.currentInputDeps);
             return this.onUpdateMemory.currentInputDeps;
