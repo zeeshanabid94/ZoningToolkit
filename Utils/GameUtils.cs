@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace ZoningToolkit.Utils
 {
@@ -15,7 +16,7 @@ namespace ZoningToolkit.Utils
         /// <param name="gameActionName">Game action name to copy from.</param>
         /// <param name="modActionName">Mod action name to copy to.</param>
         /// <returns>New <see cref="ProxyBinding" /> bound to the default game action.</returns>
-        public static ProxyAction CopyGameAction(string gameActionName, string modActionName)
+        public static ProxyAction CopyGameAction(string gameActionName, string modActionName, string nameOfClass)
         {
             LogUtils.getLogger().Debug($"Copying Game Action {gameActionName} to Mod Action {modActionName}");
             // Get action references.
@@ -32,14 +33,21 @@ namespace ZoningToolkit.Utils
             modAction.shouldBeEnabled = true;
 
             // Find action bindings.
-            ProxyBinding modBinding = modAction.bindings.FirstOrDefault(b => b.group == nameof(UnityEngine.InputSystem.Mouse));
-            ProxyBinding gameBinding = gameAction.bindings.FirstOrDefault(b => b.group == nameof(UnityEngine.InputSystem.Mouse));
+            ProxyBinding modBinding = modAction.bindings.FirstOrDefault(b => b.group == nameOfClass && b.actionName == modActionName);
+            ProxyBinding gameBinding = gameAction.bindings.FirstOrDefault(b => b.group == nameOfClass && b.actionName == gameActionName);
 
-            if (gameBinding == null)
+            if (gameBinding == default)
             {
-                LogUtils.getLogger().Debug("Game Binding is null. Therefore, no watcher on binding will be set.");
+                LogUtils.getLogger().Debug("Game Binding is default. Therefore, no watcher on binding will be set.");
                 return null;
             }
+
+            if (modBinding == default)
+            {
+                LogUtils.getLogger().Debug("Mod Binding is default. Therefore, no watcher on binding will be set.");
+                return null;
+            }
+
 
             // Setup change watcher and apply current settings.
             ProxyBinding.Watcher applyWatcher = new ProxyBinding.Watcher(gameBinding, binding => BindToGameAction(modBinding, binding));

@@ -11,7 +11,6 @@ namespace ZoningToolkit
     {
         public static ILog log = LogManager.GetLogger($"{nameof(ZoningToolkit)}.{nameof(Mod)}").SetShowsErrorsInUI(false);
         public const string ModName = "ZoningToolkit";
-        private ModSetting m_Setting;
         private ZoningToolkitModSystem m_System;
         private ZoningToolkitModUISystem m_UISystem;
         private ZoningToolkitModToolSystem m_toolSystem;
@@ -32,8 +31,6 @@ namespace ZoningToolkit
             ActiveSettings = new ModSettings(this);
 
             ActiveSettings.RegisterKeyBindings();
-
-            this.m_Setting = ActiveSettings;
 
             if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
                 log.Info($"Current mod asset at {asset.path}");
@@ -57,10 +54,10 @@ namespace ZoningToolkit
         public void OnDispose()
         {
             log.Info(nameof(OnDispose));
-            if (m_Setting != null)
+            if (ActiveSettings != null)
             {
-                m_Setting.UnregisterInOptionsUI();
-                m_Setting = null;
+                ActiveSettings.UnregisterInOptionsUI();
+                ActiveSettings = null;
             }
         }
     }

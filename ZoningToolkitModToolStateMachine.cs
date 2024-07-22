@@ -37,7 +37,7 @@ namespace ZoningToolkit
             }
         }
 
-        public ApplyMode transition(ProxyAction applyAction, ProxyAction cancelAction)
+        public ApplyMode transition(ProxyAction applyAction)
         {
             ZoningToolkitModToolSystemState previousState = this.currentState;
             switch (this.currentState)

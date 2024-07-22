@@ -8,7 +8,6 @@ namespace ZoningToolkit
     [FileLocation(Mod.ModName)]
     [SettingsUIMouseAction(ApplyActionName, "TestUsage")]
     [SettingsUIMouseAction(CancelActionName, "TestUsage")]
-    [SettingsUIHidden]
     internal class ModSettings : ModSetting
     {
         internal const string ApplyActionName = "ZoningToolkitApply";

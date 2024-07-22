@@ -225,7 +225,6 @@ namespace ZoningToolkit
 
         // Fields related to the Tool System itself.
         private ProxyAction applyAction;
-        private ProxyAction cancelAction;
         private DisplayNameOverride applyActionNameOverride;
         private ToolOutputBarrier toolOutputBarrier;
         private NetToolSystem netToolSystem;
@@ -251,8 +250,8 @@ namespace ZoningToolkit
             this.getLogger().Info($"Creating {toolID}.");
             base.OnCreate();
 
-            this.applyAction = GameUtils.CopyGameAction("Apply", ModSettings.ApplyActionName); 
-            this.cancelAction = GameUtils.CopyGameAction("Cancel", ModSettings.CancelActionName);
+            this.applyAction = GameUtils.CopyGameAction("Apply", ModSettings.ApplyActionName, nameof(UnityEngine.InputSystem.Mouse)); 
+            // this.cancelAction = GameUtils.CopyGameAction("Cancel", ModSettings.CancelActionName, nameof(UnityEngine.InputSystem.Key));
             this.applyActionNameOverride = new DisplayNameOverride(nameof(ZoningToolkitModToolSystem), this.applyAction, "Updated Zoning Side", 20);
 
             this.toolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
@@ -422,7 +421,6 @@ namespace ZoningToolkit
             this.toolEnabled = true;
 
             this.applyAction.shouldBeEnabled = true;
-            this.cancelAction.shouldBeEnabled = true;
             this.onUpdateMemory = default;
             this.workingState.lastRaycastEntity = Entity.Null;
             this.workingState.lastRaycastEntities = new NativeHashSet<Entity>(32, Allocator.Persistent);
@@ -435,10 +433,10 @@ namespace ZoningToolkit
             this.getLogger().Info($"Stopped running tool {toolID}");
             base.OnStopRunning();
             this.applyAction.shouldBeEnabled = false;
-            this.cancelAction.shouldBeEnabled = false;
             this.toolEnabled = false;
             this.applyActionNameOverride.state = DisplayNameOverride.State.Off;
             this.workingState.lastRaycastEntities.Dispose();
+            this.onUpdateMemory.currentInputDeps.Complete();
         }
 
         public override void InitializeRaycast()
@@ -472,7 +470,7 @@ namespace ZoningToolkit
                 commandBufferSystem = this.toolOutputBarrier.CreateCommandBuffer()
             };
 
-            this.applyMode = this.toolStateMachine.transition(applyAction, cancelAction);
+            this.applyMode = this.toolStateMachine.transition(applyAction);
 
             this.toolOutputBarrier.AddJobHandleForProducer(this.onUpdateMemory.currentInputDeps);
             return this.onUpdateMemory.currentInputDeps;
@@ -485,7 +483,7 @@ namespace ZoningToolkit
 
         public override bool TrySetPrefab(PrefabBase prefab)
         {
-            return this.netToolSystem.TrySetPrefab(prefab) && this.toolEnabled;
+            return this.netToolSystem.TrySetPrefab(prefab);
         }
 
         internal void EnableTool()
