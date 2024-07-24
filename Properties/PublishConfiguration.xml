@@ -50,7 +50,8 @@ Credits:
 	<Dependency Id="" />
 	<!--Changelog for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog Value="
-- Improve zoning toolkit UI
+- Improve zoning toolkit UI.
+- Update UI to reflect state of tool when tool is turned on and off.
 			   " />
 	<ExternalLink Type="github" Url="https://github.com/zeeshanabid94/ZoningToolkit" />
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
