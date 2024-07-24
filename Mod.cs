@@ -11,7 +11,6 @@ namespace ZoningToolkit
     {
         public static ILog log = LogManager.GetLogger($"{nameof(ZoningToolkit)}.{nameof(Mod)}").SetShowsErrorsInUI(false);
         public const string ModName = "ZoningToolkit";
-        private Setting m_Setting;
         private ZoningToolkitModSystem m_System;
         private ZoningToolkitModUISystem m_UISystem;
         private ZoningToolkitModToolSystem m_toolSystem;
@@ -55,10 +54,10 @@ namespace ZoningToolkit
         public void OnDispose()
         {
             log.Info(nameof(OnDispose));
-            if (m_Setting != null)
+            if (ActiveSettings != null)
             {
-                m_Setting.UnregisterInOptionsUI();
-                m_Setting = null;
+                ActiveSettings.UnregisterInOptionsUI();
+                ActiveSettings = null;
             }
         }
     }

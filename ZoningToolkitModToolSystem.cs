@@ -225,7 +225,6 @@ namespace ZoningToolkit
 
         // Fields related to the Tool System itself.
         private ProxyAction applyAction;
-        private ProxyAction cancelAction;
         private DisplayNameOverride applyActionNameOverride;
         private ToolOutputBarrier toolOutputBarrier;
         private NetToolSystem netToolSystem;
@@ -251,8 +250,8 @@ namespace ZoningToolkit
             this.getLogger().Info($"Creating {toolID}.");
             base.OnCreate();
 
-            this.applyAction = GameUtils.CopyGameAction("Apply", ModSettings.ApplyActionName); 
-            this.cancelAction = InputManager.instance.FindAction(InputManager.kToolMap, "Mouse Cancel");
+            this.applyAction = GameUtils.CopyGameAction("Apply", ModSettings.ApplyActionName, nameof(UnityEngine.InputSystem.Mouse)); 
+            // this.cancelAction = GameUtils.CopyGameAction("Cancel", ModSettings.CancelActionName, nameof(UnityEngine.InputSystem.Key));
             this.applyActionNameOverride = new DisplayNameOverride(nameof(ZoningToolkitModToolSystem), this.applyAction, "Updated Zoning Side", 20);
 
             this.toolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
@@ -272,7 +271,7 @@ namespace ZoningToolkit
             );
 
             // Try to find existing reference from tool system tool list.
-            List<ToolBaseSystem> toolList = World.GetOrCreateSystemManaged<ToolSystem>().tools;
+            List<ToolBaseSystem> toolList = this.toolSystem.tools;
             ToolBaseSystem thisSystem = null;
             foreach (ToolBaseSystem tool in toolList)
             {
@@ -292,10 +291,6 @@ namespace ZoningToolkit
             }
 
             toolList.Add(this);
-
-            // Enable Mod actions.
-            this.applyAction.shouldBeEnabled = true;
-            this.cancelAction.shouldBeEnabled = true;
 
             this.getLogger().Info($"Done Creating {toolID}.");
         }
@@ -367,6 +362,7 @@ namespace ZoningToolkit
                 {
                     this.getLogger().Info("Highlighting entity.");
 
+
                     if (previousRaycastEntity != Entity.Null)
                     {
                         JobHandle unhighlightJob = new UnHighlightEntitiesJob()
@@ -423,8 +419,8 @@ namespace ZoningToolkit
             this.getLogger().Info($"Started running tool {toolID}");
             base.OnStartRunning();
             this.toolEnabled = true;
+
             this.applyAction.shouldBeEnabled = true;
-            this.cancelAction.shouldBeEnabled = true;
             this.onUpdateMemory = default;
             this.workingState.lastRaycastEntity = Entity.Null;
             this.workingState.lastRaycastEntities = new NativeHashSet<Entity>(32, Allocator.Persistent);
@@ -437,10 +433,10 @@ namespace ZoningToolkit
             this.getLogger().Info($"Stopped running tool {toolID}");
             base.OnStopRunning();
             this.applyAction.shouldBeEnabled = false;
-            this.cancelAction.shouldBeEnabled = false;
             this.toolEnabled = false;
             this.applyActionNameOverride.state = DisplayNameOverride.State.Off;
             this.workingState.lastRaycastEntities.Dispose();
+            this.onUpdateMemory.currentInputDeps.Complete();
         }
 
         public override void InitializeRaycast()
@@ -457,6 +453,8 @@ namespace ZoningToolkit
             if (this.m_FocusChanged)
                 return inputDeps;
 
+            this.applyMode = ApplyMode.Clear;
+
             base.requireZones = true;
             base.requireAreas |= AreaTypeMask.Lots;
             this.getLogger().Info($"Apply Action enabled: {this.applyAction.enabled}");
@@ -472,7 +470,7 @@ namespace ZoningToolkit
                 commandBufferSystem = this.toolOutputBarrier.CreateCommandBuffer()
             };
 
-            this.toolStateMachine.transition(applyAction, cancelAction);
+            this.applyMode = this.toolStateMachine.transition(applyAction);
 
             this.toolOutputBarrier.AddJobHandleForProducer(this.onUpdateMemory.currentInputDeps);
             return this.onUpdateMemory.currentInputDeps;
@@ -485,7 +483,7 @@ namespace ZoningToolkit
 
         public override bool TrySetPrefab(PrefabBase prefab)
         {
-            return this.netToolSystem.TrySetPrefab(prefab) && this.toolEnabled;
+            return this.netToolSystem.TrySetPrefab(prefab);
         }
 
         internal void EnableTool()

@@ -1,4 +1,5 @@
 ﻿using Game.Input;
+using Game.Tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,7 +37,7 @@ namespace ZoningToolkit
             }
         }
 
-        public void transition(ProxyAction applyAction, ProxyAction cancelAction)
+        public ApplyMode transition(ProxyAction applyAction)
         {
             ZoningToolkitModToolSystemState previousState = this.currentState;
             switch (this.currentState)
@@ -46,21 +47,29 @@ namespace ZoningToolkit
                     {
                         this.getLogger().Info("Single Click!");
                         this.currentState = ZoningToolkitModToolSystemState.Selected;
+                        tryRunCallback(previousState, this.currentState);
+                        return ApplyMode.Apply;
                     }
                     else if (applyAction.WasPressedThisFrame() && !applyAction.WasReleasedThisFrame())
                     {
                         this.getLogger().Info("Press and Hold Click!");
                         this.currentState = ZoningToolkitModToolSystemState.Selecting;
+                        tryRunCallback(previousState, this.currentState);
+                        return ApplyMode.None;
                     }
                     else if (applyAction.IsPressed())
                     {
                         this.getLogger().Info("Holding Click!");
                         this.currentState = ZoningToolkitModToolSystemState.Selecting;
+                        tryRunCallback(previousState, this.currentState);
+                        return ApplyMode.None;
                     }
                     else if (applyAction.WasReleasedThisFrame())
                     {
                         this.getLogger().Info("Click Released!");
                         this.currentState = ZoningToolkitModToolSystemState.Selected;
+                        tryRunCallback(previousState, this.currentState);    
+                        return ApplyMode.Apply;
                     }
                     break;
                 case ZoningToolkitModToolSystemState.Selecting:
@@ -68,25 +77,31 @@ namespace ZoningToolkit
                     {
                         this.getLogger().Info("Holding Click!");
                         this.currentState = ZoningToolkitModToolSystemState.Selecting;
+                        tryRunCallback(previousState, this.currentState);
+                        return ApplyMode.None;
                     }
                     else if (!applyAction.IsPressed() && applyAction.WasReleasedThisFrame())
                     {
                         this.getLogger().Info("Click Released!");
                         this.currentState = ZoningToolkitModToolSystemState.Selected;
+                        tryRunCallback(previousState, this.currentState);
+                        return ApplyMode.None;
                     }
                     break;
                 case ZoningToolkitModToolSystemState.Selected:
                     // Schedule job here
                     this.getLogger().Info("Resetting state to Default!");
                     this.currentState = ZoningToolkitModToolSystemState.Default;
-                    break;
+                    tryRunCallback(previousState, this.currentState);
+                    return ApplyMode.Apply;
                 default:
                     this.getLogger().Info("Default case.");
                     this.currentState = ZoningToolkitModToolSystemState.Default;
-                    break;
+                    tryRunCallback(previousState, this.currentState);
+                    return ApplyMode.None;
             }
 
-            tryRunCallback(previousState, this.currentState);
+            return ApplyMode.None;
         }
 
         public void reset()

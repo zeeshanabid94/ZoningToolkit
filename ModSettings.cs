@@ -7,7 +7,6 @@ namespace ZoningToolkit
 {
     [FileLocation(Mod.ModName)]
     [SettingsUIMouseAction(ApplyActionName, "TestUsage")]
-    [SettingsUIHidden]
     internal class ModSettings : ModSetting
     {
         internal const string ApplyActionName = "ZoningToolkitApply";
@@ -25,7 +24,6 @@ namespace ZoningToolkit
         /// </summary>
         [SettingsUIMouseBinding(ApplyActionName)]
         [SettingsUIHidden]
-        public ProxyBinding LineToolApply { get; set; }
-
+        public ProxyBinding ZoningToolkitApply { get; set; }
     }
 }
