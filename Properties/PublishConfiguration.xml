@@ -43,7 +43,7 @@ Credits:
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/zoning-toolkit.1644669/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.8.0" />
+	<ModVersion Value="0.8.1" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
@@ -55,7 +55,7 @@ Credits:
 - Supports detailers patch now.
 			   " />
 	<ExternalLink Type="github" Url="https://github.com/zeeshanabid94/ZoningToolkit" />
-	<ExternalLink Type="patreon" Url="https://buymeacoffee.com/zeeshanabid94" />
+	<ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/zeeshanabid94" />
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
 	<!-- <ExternalLink Type="discord" Url="stormborn0048" />
 	<ExternalLink Type="youtube" Url="coming_soon" /> -->
