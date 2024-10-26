@@ -424,7 +424,6 @@ namespace ZoningToolkit
             this.onUpdateMemory = default;
             this.workingState.lastRaycastEntity = Entity.Null;
             this.workingState.lastRaycastEntities = new NativeHashSet<Entity>(32, Allocator.Persistent);
-            this.applyActionNameOverride.state = DisplayNameOverride.State.GlobalHint;
             this.toolStateMachine.reset();
         }
 
@@ -434,7 +433,6 @@ namespace ZoningToolkit
             base.OnStopRunning();
             this.applyAction.shouldBeEnabled = false;
             this.toolEnabled = false;
-            this.applyActionNameOverride.state = DisplayNameOverride.State.Off;
             this.workingState.lastRaycastEntities.Dispose();
             this.onUpdateMemory.currentInputDeps.Complete();
         }
