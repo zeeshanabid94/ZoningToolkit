@@ -43,16 +43,14 @@ Credits:
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/zoning-toolkit.1644669/" />
 	<!--Version of the mod-->
-	<ModVersion Value="0.8.1" />
+	<ModVersion Value="0.9.0" />
 	<!--Recommended version of the base game to use the mod-->
 	<GameVersion Value="1.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Changelog for new version. Single line or multi line. Supports minimal markdown subset-->
 	<ChangeLog Value="
-- Improve zoning toolkit UI.
-- Update UI to reflect state of tool when tool is turned on and off.
-- Supports detailers patch now.
+- Added support for latest game patch.
 			   " />
 	<ExternalLink Type="github" Url="https://github.com/zeeshanabid94/ZoningToolkit" />
 	<ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/zeeshanabid94" />
