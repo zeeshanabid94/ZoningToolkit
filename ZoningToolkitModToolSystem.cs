@@ -224,7 +224,7 @@ namespace ZoningToolkit
         }
 
         // Fields related to the Tool System itself.
-        private ProxyAction applyAction;
+        private ProxyAction _applyAction;
         private DisplayNameOverride applyActionNameOverride;
         private ToolOutputBarrier toolOutputBarrier;
         private NetToolSystem netToolSystem;
@@ -250,9 +250,11 @@ namespace ZoningToolkit
             this.getLogger().Info($"Creating {toolID}.");
             base.OnCreate();
 
-            this.applyAction = GameUtils.CopyGameAction("Apply", ModSettings.ApplyActionName, nameof(UnityEngine.InputSystem.Mouse)); 
+            this.Enabled = false;
+
+            this._applyAction = GameUtils.CopyGameAction("Apply", ModSettings.ApplyActionName, nameof(UnityEngine.InputSystem.Mouse)); 
             // this.cancelAction = GameUtils.CopyGameAction("Cancel", ModSettings.CancelActionName, nameof(UnityEngine.InputSystem.Key));
-            this.applyActionNameOverride = new DisplayNameOverride(nameof(ZoningToolkitModToolSystem), this.applyAction, "Updated Zoning Side", 20);
+            this.applyActionNameOverride = new DisplayNameOverride(nameof(ZoningToolkitModToolSystem), this._applyAction, "Updated Zoning Side", 20);
 
             this.toolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
             this.netToolSystem = World.GetOrCreateSystemManaged<NetToolSystem>();
@@ -420,7 +422,7 @@ namespace ZoningToolkit
             base.OnStartRunning();
             this.toolEnabled = true;
 
-            this.applyAction.shouldBeEnabled = true;
+            this._applyAction.shouldBeEnabled = true;
             this.onUpdateMemory = default;
             this.workingState.lastRaycastEntity = Entity.Null;
             this.workingState.lastRaycastEntities = new NativeHashSet<Entity>(32, Allocator.Persistent);
@@ -431,7 +433,7 @@ namespace ZoningToolkit
         {
             this.getLogger().Info($"Stopped running tool {toolID}");
             base.OnStopRunning();
-            this.applyAction.shouldBeEnabled = false;
+            this._applyAction.shouldBeEnabled = false;
             this.toolEnabled = false;
             this.workingState.lastRaycastEntities.Dispose();
             this.onUpdateMemory.currentInputDeps.Complete();
@@ -455,8 +457,8 @@ namespace ZoningToolkit
 
             base.requireZones = true;
             base.requireAreas |= AreaTypeMask.Lots;
-            this.getLogger().Info($"Apply Action enabled: {this.applyAction.enabled}");
-            this.getLogger().Info($"Apply Action: {this.applyAction.WasPressedThisFrame()}");
+            this.getLogger().Info($"Apply Action enabled: {this._applyAction.enabled}");
+            this.getLogger().Info($"Apply Action: {this._applyAction.WasPressedThisFrame()}");
             if (this.GetPrefab() != null)
             {
                 this.UpdateInfoview(this.m_ToolSystem.actionMode.IsEditor() ? Entity.Null : this.m_PrefabSystem.GetEntity(this.GetPrefab()));
@@ -468,7 +470,7 @@ namespace ZoningToolkit
                 commandBufferSystem = this.toolOutputBarrier.CreateCommandBuffer()
             };
 
-            this.applyMode = this.toolStateMachine.transition(applyAction);
+            this.applyMode = this.toolStateMachine.transition(_applyAction);
 
             this.toolOutputBarrier.AddJobHandleForProducer(this.onUpdateMemory.currentInputDeps);
             return this.onUpdateMemory.currentInputDeps;
@@ -476,12 +478,12 @@ namespace ZoningToolkit
 
         public override PrefabBase GetPrefab()
         {
-            return this.netToolSystem.GetPrefab();
+            return null;
         }
 
         public override bool TrySetPrefab(PrefabBase prefab)
         {
-            return this.netToolSystem.TrySetPrefab(prefab);
+            return false;
         }
 
         internal void EnableTool()
@@ -489,12 +491,8 @@ namespace ZoningToolkit
             if (!this.toolEnabled)
             {
                 this.toolEnabled = true;
-
-                if (this.toolSystem.activeTool != this)
-                {
-                    this.previousToolSystem = this.toolSystem.activeTool;
-                    this.toolSystem.activeTool = this;
-                }
+                this.previousToolSystem = this.toolSystem.activeTool;
+                this.toolSystem.activeTool = this;
             }   
         }
 
@@ -503,11 +501,7 @@ namespace ZoningToolkit
             if (this.toolEnabled)
             {
                 this.toolEnabled = false;
-
-                if (this.toolSystem.activeTool != this.previousToolSystem)
-                {
-                    this.toolSystem.activeTool = this.previousToolSystem;
-                }
+                this.toolSystem.activeTool = this.previousToolSystem;
             }
         }
 
